@@ -1,0 +1,3329 @@
+﻿@{
+    Layout = null;
+}
+@using F8YL.Model;
+
+@model ProjectDetailResponse
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta content="yes" name="apple-mobile-web-app-capable" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
+    <title>新增项目初始页面</title>
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-extend.min.css">
+    <!-- 时间组件样式 -->
+    <link href="../css/bootstrap-datepicker.min.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="../css/base.css">
+    <link rel="stylesheet" type="text/css" href="../css/layout.css">
+    <link href="../css/style.css" rel="stylesheet" />
+    <!-- jQuery -->
+    <script src="../js/jquery-1.11.3.min.js"></script>
+    <script src="../js/jquery.placeholder.min.js"></script>
+    <!-- bootstrap -->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- 时间组件 -->
+    <script src="../js/bootstrap-datepicker.min.js"></script>
+    <script src="../js/bootstrap-datepicker.zh-CN.js"></script>
+    <script src="~/js/jquery-form.js"></script>
+    <script src="~/js/uploadfile.js"></script>
+    <script src="~/Scripts/UCenter/UCenter.js"></script>
+</head>
+<body>
+    @{
+        UserProfileInfo userProfileInfo = (UserProfileInfo)ViewBag.UserFile;
+        userProfileInfo.avatar = "http://139.196.192.14" + userProfileInfo.avatar;
+
+        HospitalSearchResponse hospitalserach = (HospitalSearchResponse)ViewBag.hospitalSearch;
+
+        ProjectTplListResponse tpllist = (ProjectTplListResponse)ViewBag.TplList;//tpllist
+
+        List<HospitalUserProfileResponse> hopitaluserprofie = (List<HospitalUserProfileResponse>)ViewBag.hopital;//pilist
+
+        TplDetailResponse tpldetail = (TplDetailResponse)ViewBag.TplDetail;
+    }
+
+    <!-- 头部 star -->
+    <div id="top" class="">
+        <div class="col-md-6 col-md-offset-3 col-sm-offset-2  col-sm-8  col-xs-12 ">
+            <div class="col-sm-4 col-xs-3 colorac h4">
+                LOGO
+            </div>
+            <ul class="col-sm-8 col-xs-9 text-right nav_menu">
+                @*<li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLHome/Index">首页</a></li>*@
+                <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLProject/ProjectList">项目</a></li>
+                <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLMessage/MessageIndex">留言板</a><span class="news text-top"></span></li>
+                @if (userProfileInfo.role == "90" || userProfileInfo.role == "80")
+                {
+                    <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLManage/ManageIndex">管理</a></li>
+                }
+            </ul>
+        </div>
+    </div>
+    <!-- 头部 end -->
+    <!-- 页面内容 star -->
+    <div class="container">
+        <!-- 菜单 star -->
+        <div id="menu" class="text-right margin-t5">
+            @*<button class="btn btn-transparent margin-w5 min_btn" style="line-height: 9px"><img src="../images/icon5.png"></button>*@
+
+            @{
+                if (Int32.Parse(ViewBag.role) >= 20 && Int32.Parse(userProfileInfo.role) != 90)//PI及以上才有权限
+                {
+                    <button class="btn btn-transparent margin-w5 colorfe  min_btn" data-toggle="modal"
+                            data-target="#new" style="margin-bottom:10px">
+                        <img class="pad-w5" style="margin-top:-3px" src="../images/icon4.png">新增项目
+                    </button>
+                    <button id="fileArchive" class="btn btn-transparent margin-w5 colorfe  min_btn" data-toggle="modal"
+                            data-target="#manage" style="margin-bottom:10px">
+                        <img class="pad-w5" style="margin-top:-3px" src="../images/icon3.png">管理归档
+                    </button>
+                }
+            }
+
+            <button class="btn btn-transparent margin-w5 colorfe  min_btn" id="btn_user" style="position:relative;top:-5px">
+                <span class="head-pic" style="margin:0;padding:0;position:absolute;left:0;top:0">
+                    <img src="@userProfileInfo.avatar" style="width:35px;height:34px;" id="useravatar" />
+                </span>
+                <span class="pad-w5" id="show_username" style="padding-left:35px">@userProfileInfo.username</span>
+            </button>
+        </div>
+        <!-- 菜单 end -->
+        <!-- 页面板块 -->
+        <div class="row">
+            <div class="row clearfix" style="margin:10px 0">
+                <span class="col-xs-6 col-sm-9 colorfe">
+
+                    @{
+                        string projectname = "";
+                        string opendate = "";
+                        string closedate = "";
+                        string num_goal = "0";
+                        if (Model.data != null)
+                        {
+                            projectname = Model.data.name == null ? "" : Model.data.name;
+                            opendate = Model.data.opendate == null ? "" : Model.data.opendate;
+                            closedate = Model.data.closedate == null ? "" : Model.data.closedate;
+                            num_goal = Model.data.num_goal == null ? "0" : Model.data.num_goal;
+                        }
+
+
+                        if (Int32.Parse(ViewBag.role) == 10 || int.Parse(ViewBag.role) == -10)//医生没有权利修改项目名称
+                        {
+                            <button class="btn btn-transparent margin-w5 colorfe" title="修改项目名称"><span>@projectname</span></button>
+                        }
+                        else
+                        {
+                            if (Session["CurrentUserID"].ToString() == Model.data.userid)
+                            {
+
+                                <button class="btn btn-transparent margin-w5 colorfe" title="修改项目名称"><span>@projectname</span></button>
+                            }
+                            else
+                            {
+
+                                <button class="btn btn-transparent margin-w5 colorfe" data-toggle="modal" data-target="#edit_projects_name" title="修改项目名称"><span id="projectname">@projectname</span></button>
+
+                            }
+                        }
+
+                        <input type="hidden" id="projectId" value="@Model.data.id">
+                        <input type="hidden" id="hospitalnum" value="@Model.data.hospitalid">
+                        <input type="hidden" id="userId" value="@Model.data.userid">
+                        <input type="hidden" id="num_doctor" value="@Model.data.num_doctor">
+                        <input type="hidden" id="num_goal" value="@Model.data.num_goal">
+                        <input type="hidden" id="num_patient" value="@Model.data.num_patient">
+                        <input type="hidden" id="num_pi" value="@Model.data.num_pi">
+                        <input type="hidden" id="roleNo" value=@ViewBag.role />
+                        <input type="hidden" id="sessionHospitalid" value=@ViewBag.sessionHospitalid />
+                        <input type="hidden" id="sessionUserName" value=@ViewBag.username />
+                        <input type="hidden" id="selectedhospitalid" />
+                        if (Int32.Parse(ViewBag.role) == 10 || int.Parse(ViewBag.role) == -10)//医生没有权利修改项目时间
+                        {
+                            <span style="cursor:pointer;white-space: nowrap;">@opendate~@closedate</span>
+
+                        }
+                        else
+                        {
+                            <span style="cursor:pointer;white-space: nowrap;" id="data" data-toggle="modal" data-target="#edit_projects_time">@opendate~@closedate</span>
+
+                        }
+
+                        if (Session["CurrentUserID"].ToString() == Model.data.userid)
+                        {
+                            if (Int32.Parse(ViewBag.role) >= 20)//PI及以上才有权限
+                            {
+                                <button class="btn btn-transparent margin-w5 colorfe" data-toggle="modal" data-target="#archive_projects" title="归档项目"><img style="margin-top:-3px" src="../images/icon3.png"></button>
+
+                            }
+                        }
+                    }
+                </span>
+                <span class="col-xs-6 col-sm-3 text-right">
+                    <button class="btn btn-transparent margin-w5 colorfe  btn_add_member">
+                        <img src="../images/icon8.png"><span class="pad-w5">项目成员</span>
+                    </button>
+
+                </span>
+            </div>
+
+            <!-- 页面面板 star -->
+            <!-- 个人中心 -->
+            <div class="col-sm-3 col-md-2 col-lg-1 margin-t10" id="user_settings" style="display:none">
+                <div class="panel panel-default pad-h10" style="min-width: 100px;">
+                    <ul class="pad-w20">
+                        <li data-toggle="modal" data-target="#personal_data"><a class="btn_settings">个人设置</a></li>
+                        <li data-toggle="modal" data-target="#change_password"><a class="btn_editpass">修改密码</a></li>
+                        <li class="btn_exit"><a href="javascript:;" style="display:block;">退出</a></li>
+                    </ul>
+                </div>
+            </div>
+            <!-- 页面面板 end -->
+            <!-- 功能面板 star -->
+            <!-- 面板1 基本信息-->
+            <div class="col-sm-6 col-md-4 margin-t10">
+                <div class="panel panel-default pad-h10">
+                    <p class="pad-w20 margin-t10" style="margin-bottom: 0">
+                        基本信息
+                    </p>
+                    <div class="panel-body">
+                        @*<input type="text" class="form-control" placeholder="" value="项目周期" data-toggle="modal" data-target="#edit_projects_cycle" readonly="readonly">*@
+
+                        @{
+                            if (Int32.Parse(ViewBag.role) == 10 || int.Parse(ViewBag.role) == -10)//医生没有权利修改项目时间
+                            {
+                                <input id="numgoal" type="text" class="form-control margin-t10" placeholder="" value="入组人数：@num_goal" readonly="readonly">
+                            }
+                            else
+                            {
+                                if (Session["CurrentUserID"].ToString() == Model.data.userid)
+                                {
+                                    <input type="text" class="form-control margin-t10" placeholder="" value="入组人数：@num_goal" data-toggle="modal" data-target="#edit_group_number" readonly="readonly">
+                                }
+                                else
+                                {
+                                    <input id="numgoal" type="text" class="form-control margin-t10" placeholder="" value="入组人数：@num_goal" readonly="readonly">
+                                }
+                            }
+                        }
+
+                    </div>
+                </div>
+            </div>
+            <!-- 面板2 参与医院-->
+            <div class="col-sm-6 col-md-4 margin-t10">
+                <div class="panel panel-default pad-h10">
+                    <p class="pad-w20 margin-t10" style="margin-bottom: 0">
+                        参与医院
+                    </p>
+                    <div class="panel-body">
+                        <div id="hospitallist">
+                            @if (Model.data.hospital != null)
+                            {
+                                foreach (ProjectDetailPIListInfo pi in Model.data.project_pi)
+                                {
+                                    var hospitalname = (from s in Model.data.hospital
+                                                        where pi.hospitalid == s.id
+                                                        select s.title).ToList()[0];
+
+                                    <div class="input-group" type="piList" style="margin-bottom:10px;" name="@pi.piid/@pi.username/@hospitalname/@pi.num_goal">
+                                        <input type="hidden" value="" id="hospitalid" />
+                                        <input id="hospitalName" type="text" class="form-control" value="@pi.username/@hospitalname" data-toggle="modal" data-target="#join_hospitals" readonly="readonly" name="@pi.num_goal/@pi.id">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default border-left" type="button">
+                                                @pi.num_patient/@pi.num_goal
+                                            </button>
+                                        </span>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        @{
+                            if (Session["CurrentUserID"].ToString() == Model.data.userid)
+                            {
+                                if (Int32.Parse(ViewBag.role) >= 20)//PI及以上才有权限
+                                {
+                                    <a href="#" class="btn_add_hospitals"><img src="../images/icon9.png"><span class="margin-w10 text-middle">新增医院</span></a>
+                                }
+                            }
+
+                        }
+
+                    </div>
+                </div>
+            </div>
+            <!--医院名称 -->
+            <div class="col-sm-6 col-md-3 margin-t10 choose-p2-hospitals" style="display:none">
+                <div class="panel panel-default pad-w20 pad-h10">
+                    <p class="margin-t10" style="margin-bottom: 0">
+                        医院名称
+                    </p>
+                    <input type="text" class="form-control margin-t10" placeholder="输入关键字进行过滤">
+                    <ul class="hospital margin-t10">
+
+                        @foreach (HospitalEntity hospital in hospitalserach.data.data)
+                        {
+                            <li>
+                                @hospital.title
+                                <ul class="pad-w5 choose-patient" id="hospitalli">
+
+                                    @for (int i = 0; i < hopitaluserprofie.Count; i++)
+                                    {
+                                        foreach (HospitalUserProfileInfo hospfile in hopitaluserprofie[i].data.data)
+                                        {
+                                            if (hospfile.hospitalid == hospital.id)
+                                            {
+
+                                                <li id="@hospfile.id" name="@hospital.id/@hospital.title">@hospfile.username</li>
+                                            }
+                                        }
+                                    }
+                                </ul>
+                            </li>
+                        }
+
+                        @*<li>
+                                长征医院
+                                <ul class="pad-w5 choose-patient">
+                                    <li>王某某</li>
+                                    <li>王某某</li>
+                                    <li>王某某</li>
+                                </ul>
+                            </li>*@
+                    </ul>
+                    <button type="button" class="btn btn-default margin-w10 btn_cp2_close" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+            <!-- 面板3 模板名称 -->
+            <div class="col-sm-12 col-md-4 margin-t10">
+                <div class="panel panel-default pad-h10">
+                    <p class="pad-w20 margin-t10" style="margin-bottom: 0">
+                        模板名称
+                    </p>
+                    <div class="panel-body">
+                        <input type="text" class="form-control" placeholder="输入关键字进行过滤">
+                    </div>
+                    <div style="border:1px solid #ccc;border-radius: 5px; margin-left: 15px;margin-right: 15px" class="pad-w10 template-choose">
+
+                        @foreach (ProjectDetailTplInfo detailtpl in Model.data.tpl)
+                        {
+                            <div class="radio">
+                                <label><input type="radio" name="rdoTemp" value="@detailtpl.id/@detailtpl.name/@detailtpl.remark">@detailtpl.remark _@detailtpl.name</label>
+                            </div>
+                        }
+                    </div>
+                    <div class="margin-h20"></div>
+                </div>
+            </div>createproject
+            <!--跳转 病史指标列表 -->
+            <div class="col-sm-6 col-md-3 margin-t10 t-medical-history" style="display:none">
+                <div class="panel panel-default pad-w20 pad-h10">
+                    <p class="margin-t10" style="margin-bottom: 0">
+                        <a href="javascript:;" class="mh_back">
+                            <img src="../images/icon10.png"><span class="margin-w10">病史</span>
+                        </a>
+                    </p>
+                    <label style="display:block;font-weight: normal" class="margin-h10">
+                        现病史
+                        <input type="text" class="form-control margin-t10" placeholder="首发症状" readonly="readonly">
+                        <input type="text" class="form-control margin-t10" placeholder="黄疸" readonly="readonly">
+                        <input type="text" class="form-control margin-t10" placeholder="消化道症状" readonly="readonly">
+                        <input type="text" class="form-control margin-t10" placeholder="其他症状" readonly="readonly">
+                    </label>
+                    <label style="display:block; font-weight: normal" class="margin-h10">
+                        既往史
+                        <input type="text" class="form-control margin-t10" placeholder="吸烟" readonly="readonly">
+                        <input type="text" class="form-control margin-t10" placeholder="饮酒" readonly="readonly">
+                        <input type="text" class="form-control margin-t10" placeholder="高血压" readonly="readonly">
+                        <input type="text" class="form-control margin-t10" placeholder="糖尿病" readonly="readonly">
+                        <input type="text" class="form-control margin-t10" placeholder="确诊糖尿病时间" readonly="readonly">
+                    </label>
+                </div>
+            </div>
+            <!-- 参与医院侧边隐藏模板 -->
+            <div class="col-sm-4 col-md-3 margin-t10 penal-hospitals" style="display:none">
+                <div class="panel panel-default pad-w20 pad-h10  side">
+                    <p class="margin-t10" style="margin-bottom: 0">
+                        参与医院
+                    </p>
+                    <input type="text" class="form-control margin-t10" placeholder="输入关键字进行过滤">
+                    <button class="btn btn-side btn_h_back"></button>
+                    <ul class="illness u-hospitals partake-hospitals" id="allhospitallist">
+
+                        @if (Model.data.hospital != null)
+                        {
+
+                            foreach (ProjectDetailHospitalInfo hospital in Model.data.hospital)
+                            {
+                                if (Session["role"].ToString() == "10")
+                                {
+                                    if (hospital.id == Model.data.hospitalid)
+                                    {
+                                        <li name="@hospital.id">@hospital.title</li>
+                                    }
+                                }
+                                else
+                                {
+                                    <li name="@hospital.id">@hospital.title</li>
+                                }
+
+                            }
+                        }
+
+                        @*<li>长征医院</li>
+                            <li>长征医院</li>
+                            <li>长征医院</li>
+                            <li>长征医院</li>*@
+                    </ul>
+                </div>
+            </div>
+            <!-- 添加成员 -->
+            <div class="col-sm-6 col-md-4 margin-t10 choose-member" style="display:none">
+                <div class="panel panel-default pad-w20 pad-h10 side">
+                    <p style="margin-bottom: 0" class="h-Name">
+                        <img src="../images/icon10.png"><span class="margin-w10" id="hospitaltext"></span>
+                    </p>
+                    <div style="overflow:auto" class="margin-t10 tab_one">
+                        <span class="col-xs-6 pad-h5 text-center active " data-tab="tab1" style="border:1px solid #ccc;border-top-left-radius: 5px;border-bottom-left-radius: 5px;">医院成员</span>
+                        <span class="col-xs-6 pad-h5 text-center" data-tab="tab2" style="border-top-right-radius: 5px;border-bottom-right-radius: 5px;border:1px solid #ccc; border-left:0">患者</span>
+                    </div>
+                    <button class="btn btn-side btn_cm_back"></button>
+                    <div class="tab tab1">
+                        <div class="margin-t10">
+                            <input type="text" class="form-control" placeholder="输入关键字进行过滤">
+                        </div>
+                        <ul class="margin-h10 hospital_members">
+                            <!-- 主pi不可移除 -->
+                            @if (Session["role"].ToString().Equals("80") || Session["role"].ToString().Equals("20"))
+                            {
+                                foreach (ProjectDetailDoctorListInfo detailpi in Model.data.project_doctor)
+                                {
+                                    if (Model.data.hospitalid == detailpi.hospitalid)
+                                    {
+
+                                        <li data-user="ys" name="@detailpi.doctorid/@detailpi.username" id="@detailpi.hospitalid">
+                                            <div class="col-xs-8">
+                                                <div class="row">
+                                                    <span class="head-pic-sm">
+                                                        <img style="border-radius:5px;" src="../images/head-sm.jpg">
+                                                    </span>
+                                                    <span class="margin-w10 text-hides">@detailpi.username</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-xs-4" style="line-height: 2.6;">@detailpi.num_patient/@detailpi.num_goal</div>
+                                        </li>
+                                    }
+                                }
+                            }
+
+                        </ul>
+                        <div class="panel-foot">
+                            @{
+                                if (Int32.Parse(ViewBag.role) >= 20)//PI及以上才有权限
+                                {
+                                    <a href="javascript:;" class="btn_cm_add_member">
+                                        <img style="vertical-align: initial" src="../images/icon13.png">
+                                        <span id="adddocuter" data-toggle="modal" data-target="#choose-doctor" class="margin-w5">新增成员</span>
+                                    </a>
+                                }
+                            }
+
+                        </div>
+                    </div>
+                    <div class="tab tab2" style="display:none">
+                        <div class="panel-foot row" style="margin-top: 5px;">
+                            <ul class="patient_members margin-h10" id="patientList">
+
+                                @if (Session["role"].ToString().Equals("80") || Session["role"].ToString().Equals("20"))
+                                {
+                                    foreach (ProjectDetailPatientListInfo patientinfo in Model.data.project_patient)
+                                    {
+                                        if (patientinfo.hospitalid == Model.data.hospitalid)
+                                        {
+                                            var mobile = (from s in Model.data.patient
+                                                          where patientinfo.patientid == s.id
+                                                          select s.mobile).ToList()[0];
+                                            var age = (from s in Model.data.patient
+                                                       where patientinfo.patientid == s.id
+                                                       select s.age).ToList()[0];
+
+                                            <li name="@patientinfo.patientid/@mobile/@patientinfo.username">
+                                                <div class="col-xs-7">
+                                                    <div class="row">
+                                                        <span class="head-pic-sm">
+                                                            <img style="border-radius:5px;" src="../images/head-sm.jpg">
+                                                        </span>
+                                                        <span class="margin-w10 text-hides">@patientinfo.username</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-xs-5 text-right" style="line-height: 2.6;"><img class="margin-w5 initial" src="../images/icon17.png">@age 岁</div>
+                                            </li>
+                                        }
+                                    }
+                                }
+                            </ul>
+                            @*<a href="/F8YLMessage/MessageIndex?pageType=2&projectId=@Model.data.id&hospitalId=@Model.data.hospitalid" class="margin-h10" style="display:block"><img style="vertical-align: initial" src="../images/icon13.png"><span class="margin-w5">新增成员</span></a>*@
+
+                            <div id="importpatient">
+                                @*<button type="submit" class="btn btn-success pull-right">导入</button>
+                                    <div style="margin-right: 70px;">
+                                        <input type="text" class="form-control" placeholder="导入患者模板">
+                                    </div>*@
+                                <form action='' method='post' enctype='multipart/form-data' id="formFileUserTemp">
+                                    @*<input type="file" id="pifile" name="Filedata" class="form-control" placeholder="导入患者模板" />
+                                        <button type="button" class="btn btn-success pull-right" onclick="uploadFile()">上传</button>*@
+                                    <div style="padding-bottom:8px;">
+                                        <button type="button" class="btn btn-success pull-right" id="uploadusertemp">上传</button>
+                                        <div class="g-upload-file" style="width:70%">
+                                            <input type="text" name="textfield" style="width:60%" id="textfield" class="txt-file">
+                                            <input type="button" class="btn-file" value="浏览..." style="">
+                                            <input type="file" id="textfile" name="Filedata" class="form-control btn-file2" onchange="ChooseFileDone(this.value)">
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <a onclick="downloadTemplate()" class="margin-h10" style="display:block" id="piTemplate"><img style="vertical-align: initial" src="../images/icon15.png"><span class="margin-w5" style="cursor:pointer;">下载患者清单模板</span></a>
+                            @*<div id="importpatientadd" style="display:none;">
+                                    <button type="button" class="btn btn-default margin-w10" data-dismiss="modal" onclick="importDataFromFile()">新增</button>
+                                    <button type="button" class="btn btn-default margin-w10" data-dismiss="modal" onclick="cancelImportData()">取消</button>
+                                </div>*@
+                            <a class="margin-h10 btn_w_information" data-toggle="modal" data-target="#add_patient_data" style="display:block;cursor:pointer;">
+                                <img style="vertical-align: initial" src="../images/icon16.png">
+                                <span class="margin-w5">填写患者资料进行添加</span>
+                            </a>
+
+                        </div>
+                    </div>
+                </div>
+                <!-- 功能面板 end -->
+            </div>
+            <!-- 医生信息卡 -->
+            <div class="col-sm-6 col-md-4 margin-t10 tab_Doctor" style="display:none;">
+                <div class="panel panel-default box-shadow">
+                    <div class=" col-xs-12 pad-h10" style="border-bottom:1px solid #ccc">
+                        <span class="head-pic-sm">
+                            <img style="border-radius:5px;" id="doctorimg" src="../images/head-sm.jpg" height="35" width="34">
+                        </span>
+                        <span class="pad-w20 margin-t10 middle" style="display:inline-block">
+                            <p>
+                                <span id="doctorname"></span>
+                                @{
+                                    if (Int32.Parse(ViewBag.role) >= 20)//PI及以上才有权限
+                                    {
+                                        <a class="windowsSkip" href="#"><img class="margin-w20" src="../images/icon18.png"></a>
+                                        @*<a href="javascript:;" class="open_message" data-toggle="modal" data-target="#modal_message"><img class="margin-w20" src="../images/icon18.png"></a>*@
+                                    }
+                                }
+                            </p>
+                            <p id="doctormobile"></p>
+                        </span>
+                        <div>
+                            <a class="btn_td_ck" data-toggle="modal" data-target="#personal_data" style="cursor:pointer;">查看成员资料</a><br>
+                            @{
+                                if (Int32.Parse(ViewBag.role) >= 20)//PI及以上才有权限
+                                {
+                                    <a id="doctormove" href="javascript:;" class="btn_td_yc">将该成员移出项目</a>
+                                }
+                            }
+
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-default margin-w20 margin-h10 btn_td_close" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+            <!-- 患者信息卡 -->
+            <div class="col-sm-6 col-md-4 margin-t10 tab_Patient" style="display:none;">
+                <div class="panel panel-default box-shadow">
+                    <div class="col-xs-12 pad-h10" style="border-bottom:1px solid #ccc">
+                        <span class="head-pic-sm">
+                            <img style="border-radius:5px;" id="paitentimg" src="../images/head-sm.jpg" height="35" width="34">
+                        </span>
+                        <span class="pad-w20 margin-t10 middle" style="display:inline-block">
+                            <p>
+                                <span id="patientNames"></span>
+                                <a class="windowsSkip" href="#"><img class="margin-w20" src="../images/icon18.png"></a>
+                                @*<a href="javascript:;" class="open_message" data-toggle="modal" data-target="#modal_message"><img class="margin-w20" src="../images/icon18.png"></a>*@
+                            </p>
+                            <p> <span id="patientmobiles"></span> </p>
+                        </span>
+                        <div>
+                            <a class="btn_tp_ck" data-toggle="modal" data-target="#add_patient_data" style="cursor:pointer;">查看患者资料</a><br />
+
+                            @{
+                                if (!Session["role"].ToString().Equals("-10"))
+                                {
+
+                                    @*<a id="zypatient" href="javascript:;" class="btn_td_yz">将该成员转移至</a>*@
+                                    <a id="ycpatient" href="javascript:;" class="btn_td_patentyc">将该成员移出项目</a>
+                                }
+                            }
+
+                            <a id="patentdatas" href="#">患者指标输入</a>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-default margin-w20 margin-h10 btn_tp_close" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+
+            <!-- 弹框 star -->
+            <!-- 胰腺癌模板-->
+            <div class="modal fade" id="temp_yxa" tabindex="-1" role="dialog"
+                 aria-labelledby="" aria-hidden="true" style="z-index:9999">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="">
+                                项目模板
+                            </h4>
+                        </div>
+                        <div class="modal-body" style="max-height:400px;overflow-y:auto;">
+                            <p id="tpldeatilname" class="margin-t10" style="margin-bottom: 0">
+                            </p>
+                            <ul class="illness u-Mhistory"></ul>
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button type="button" class="btn btn-default pad-w20 btn_cp_cancel" data-dismiss="modal" aria-hidden="true">关闭</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 填写患者资料 -->
+            <div class="modal fade" id="add_patient_data" tabindex="-1" role="dialog"
+                 aria-labelledby="" aria-hidden="true" style="z-index:9999">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="">
+                                患者资料
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-horizontal" role="form">
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2" style="line-height: 3">头像</label>
+                                    <div class="col-sm-10">
+                                        @*<span class="head-pic-md middle"></span><input type="submit" class="btn btn-info margin-w10" id="" value="点击上传头像">*@
+                                        <input type="hidden" id="recordPatientId" />
+                                        <form action='' method='post' enctype='multipart/form-data' id="formFilepatenPic">
+                                            <input style="width:80%;float:left" type="file" id="pifile" name="Filedata" class="form-control" placeholder="导入患者模板" />
+                                            <input style="float:left" class="btn btn-info margin-w10" type="button" value="上传" id="uploadpatentpic">
+                                        </form>
+
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">住院号</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="patientnum_il">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">姓名</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="patientName">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    @*<label for="" class="col-sm-2 margin-h5">性别</label>
+                                        <div class="col-sm-4">
+                                            <input type="text" class="form-control" id="paitentsex">
+                                        </div>*@
+
+                                    <label for="" class="col-sm-2 margin-h5">性别</label>
+                                    <div class="col-sm-10" style="width:30%">
+                                        <select class="form-control" id="selectsex">
+                                            <option name="1">男</option>
+                                            <option name="0">女</option>
+                                        </select>
+                                    </div>
+
+                                    <label for="" class="col-sm-2 margin-h5">民族</label>
+                                    <div class="col-sm-4">
+                                        @*<input type="text" class="form-control" id="paitenethnic">*@
+                                        <select class="form-control" id="selectethnic">
+                                            <option name="0">未知</option>
+                                            <option name="1">汉族</option>
+                                            <option name="2">蒙古族</option>
+                                            <option name="3">回族</option>
+                                            <option name="4">藏族</option>
+                                            <option name="5">维吾尔族</option>
+                                            <option name="6">苗族</option>
+                                            <option name="7">彝族</option>
+                                            <option name="8">壮族</option>
+                                            <option name="9">布依族</option>
+                                            <option name="10">朝鲜族</option>
+                                            <option name="11">满族</option>
+                                            <option name="12">侗族</option>
+                                            <option name="13">瑶族</option>
+                                            <option name="14">白族</option>
+                                            <option name="15">土家族</option>
+                                            <option name="16">哈尼族</option>
+                                            <option name="17">哈萨克族</option>
+                                            <option name="18">傣族</option>
+                                            <option name="19">黎族</option>
+                                            <option name="20">僳僳族</option>
+                                            <option name="21">佤族</option>
+                                            <option name="22">畲族</option>
+                                            <option name="23">高山族</option>
+                                            <option name="24">拉祜族</option>
+                                            <option name="25">水族</option>
+                                            <option name="26">东乡族</option>
+                                            <option name="27">纳西族</option>
+                                            <option name="28">景颇族</option>
+                                            <option name="29">柯尔克孜族</option>
+                                            <option name="30">土族</option>
+                                            <option name="31">达斡尔族</option>
+                                            <option name="32">仫佬族</option>
+                                            <option name="33">羌族</option>
+                                            <option name="34">布朗族</option>
+                                            <option name="35">撒拉族</option>
+                                            <option name="36">毛南族</option>
+                                            <option name="37">仡佬族</option>
+                                            <option name="38">锡伯族</option>
+                                            <option name="39">阿昌族</option>
+                                            <option name="40">普米族</option>
+                                            <option name="41">塔吉克族</option>
+                                            <option name="42">怒族</option>
+                                            <option name="43">乌孜别克族</option>
+                                            <option name="44">俄罗斯族</option>
+                                            <option name="45">鄂温克族</option>
+                                            <option name="46">德昂族</option>
+                                            <option name="47">保安族</option>
+                                            <option name="48">裕固族</option>
+                                            <option name="49">京族</option>
+                                            <option name="50">塔塔尔族</option>
+                                            <option name="51">独龙族</option>
+                                            <option name="52">鄂伦春族</option>
+                                            <option name="53">赫哲族</option>
+                                            <option name="54">门巴族</option>
+                                            <option name="55">珞巴族</option>
+                                            <option name="56">基诺族</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">身份证号</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="patientIdCard">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">年龄</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="patientage">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">身高</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="patientheight">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">体重</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="patientweight">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">手机</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="patientMobile">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">电话</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="patienttel">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">地址</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="patientaddress">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">主治医生</label>
+                                    <div class="col-sm-10">
+                                        <select class="form-control" id="selectdoctor">
+                                            <option>默认创建项目的医生</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button id="addnewpatient" type="button" class="btn btn-default">保存</button>
+                            <button type="button" class="btn btn-default margin-w5 btn_ad_close" data-dismiss="modal" aria-hidden="true">取消</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 医生名称 -->
+            <div class="modal fade" id="choose-doctor" tabindex="-1" role="dialog"
+                 aria-labelledby="" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="">
+                                医生
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <input type="text" class="form-control" placeholder="输入关键字进行过滤">
+                            <div id="docutorlist" style="border:1px solid #ccc;border-radius: 5px; margin-top:10px;max-height: 200px;overflow: hidden;overflow-y: auto;" class="pad-w10"></div>
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button type="button" class="btn btn-default pad-w20 btn_cp_cancel" data-dismiss="modal" aria-hidden="true">关闭</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 修改密码 -->
+            <div class="modal fade" id="change_password" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel" aria-hidden="true" style="z-index:9999">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                修改密码
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <input type="password" class="form-control" placeholder="当前密码" id="passold">
+                            <input type="password" class="form-control margin-h10" placeholder="新密码" id="passnew1">
+                            <input type="password" class="form-control margin-h10" placeholder="再次输入新密码" id="passnew2">
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button type="button" class="btn btn-default pad-w20 btn_cp_save" data-dismiss="modal">保存</button>
+                            <button type="button" class="btn btn-default pad-w20 btn_cp_cancel" data-dismiss="modal" aria-hidden="true">取消</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 个人资料 -->
+            <div class="modal fade" id="personal_data" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel" aria-hidden="true" style="z-index:9999">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                个人资料
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-horizontal" role="form">
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2" style="line-height: 3">头像</label>
+                                    <div class="col-sm-10">
+                                        <span class="head-pic-md middle"><img id="header-pic" style="width:50px;height:50px" src="@userProfileInfo.avatar" /></span>
+                                        <form action='' method='post' enctype='multipart/form-data' id="formFileUserPic">
+                                            <input type="file" class="btn btn-info btn_upload" style="cursor: pointer;" onchange="javascript:$('#uploaduserpic').show();" name="Filedata" placeholder="点击上传头像">
+                                        </form>
+                                        <input type="button" value="上传" id="uploaduserpic" class="btn btn-success">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">姓名</label>
+                                    <div class="col-sm-10">
+                                        <input type="hidden" id="hidden-userid" value="@userProfileInfo.id" />
+                                        <input type="text" class="form-control" id="username" value="@userProfileInfo.username">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">科室</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="dept" value="@userProfileInfo.deptname">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">职称</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="jobtitle" value="@userProfileInfo.duty">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">手机</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="mobilephone" value="@userProfileInfo.mobile" readonly="readonly">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">电话</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="telphone" value="@userProfileInfo.tel">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">身份证</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="idcard" value="@userProfileInfo.idcard">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">邮箱</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="email" value="@userProfileInfo.email">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="" class="col-sm-2">医院名称</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="hospitalname" value="@userProfileInfo.hospital.title" readonly="readonly">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            @if (Session["role"].ToString().Equals("10"))
+                            {
+                                <button type="button" class="btn btn-default btn_pd_save" disabled="disabled">保存</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-default btn_pd_save">保存</button>
+                            }
+
+                            <button type="button" class="btn btn-default margin-w5 btn_cancel" data-dismiss="modal" aria-hidden="true">取消</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 归档项目弹框 -->
+            <div class="modal fade" id="archive_projects" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                归档项目
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            归档项目后将无法对其进行修改，<br>
+                            确认要归档吗?
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button id="projectfiling" type="button" class="btn btn-danger"
+                                    data-dismiss="modal">
+                                归档
+                            </button>
+                            <button type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                取消
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 管理项目弹框 -->
+            <div class="modal fade" id="manage" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                管理归档
+                            </h4>
+                        </div>
+                        <div class="modal-body" id="filelist">
+                            <hr style="margin:0">
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                关闭
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 修改项目名称 -->
+            <div class="modal fade" id="edit_projects_name" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                修改项目名称
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <hr style="margin:0">
+                            <input id="newprojectname" type="text" class="form-control" placeholder="请输入项目名称" value="@Model.data.name">
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button id="updateprojectname" type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                确定
+                            </button>
+                            <button type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                取消
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 新增项目弹框 -->
+            <div class="modal fade" id="new" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                新建项目
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <hr style="margin:0">
+                            <input id="detailaddprojectname" type="text" class="form-control" placeholder="请输入项目名称">
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button id="createproject" type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                确定
+                            </button>
+                            <button type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                取消
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 基本信息入组人数 -->
+            <div class="modal fade" id="edit_group_number" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog" style="width:400px;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <label>入组人数</label>
+                            <input id="groupnum" type="text" onkeyup="this.value=this.value.replace(/\D/g,'0')" onafterpaste="this.value=this.value.replace(/\D/g,'0')" class="form-control" value="@Model.data.num_goal">
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button id="btngroupnum" type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                确定
+                            </button>
+                            <button type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                取消
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 修改项目周期 -->
+            <div class="modal fade" id="edit_projects_cycle" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog" style="width:400px;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <label>项目周期</label>
+                            <input type="text" onkeyup="this.value=this.value.replace(/\D/g,'0')" onafterpaste="this.value=this.value.replace(/\D/g,'0')" class="form-control">
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                确定
+                            </button>
+                            <button type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                取消
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 修改项目时间 -->
+            <div class="modal fade" id="edit_projects_time" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog" style="width:400px;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                修改项目时间
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <input type="text" class="form-control input-time" id="time-star" name="star" style="width:360px">
+                            <input type="text" class="form-control margin-t10 input-time" id="time-end" name="end" style="width:360px">
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button id="btncycle" type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                确定
+                            </button>
+                            <button type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                取消
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 参与医院入组人数编辑弹出框 -->
+            <div id="join_hospitals" class="modal fade" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog" style="">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <label>参与医院</label>
+                            <select class="form-control" id="selectoption">
+                                <option>默认创建项目的医院</option>
+                            </select>
+                            <label class="margin-t10">入组人数</label>
+                            <input id="numgoals" type="text" onkeyup="this.value=this.value.replace(/\D/g,'0')" onafterpaste="this.value=this.value.replace(/\D/g,'0')" class="form-control">
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+
+
+                            @if (Session["CurrentUserID"].ToString() == Model.data.userid)
+                            {
+                                if (Int32.Parse(ViewBag.role) >= 20)//PI及以上才有权限
+                                {
+                                    <button type="button" class="btn btn-default"
+                                            data-dismiss="modal" id="savenumgoal">
+                                        保存
+                                    </button>
+                                }
+                            }
+
+
+                            <button type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                取消
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 医院pi -->
+            <div class="modal fade" id="join_hospitals_pi" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                医院PI
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="checkbox" style="border: 1px solid #ccc;padding: 5px;border-radius: 5px">
+                                <label><input id="picheckboxx" type="checkbox" value="" style="display:none"><span class="label label-default margin-w5">PI</span><span id="piname"></span></label>
+                            </div>
+                            <label><input type="text" id="pinum" onkeyup="this.value=this.value.replace(/\D/g,'0')" onafterpaste="this.value=this.value.replace(/\D/g,'0')" class="form-control" placeholder="入组人数"></label>
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button id="piAppend" type="button" class="btn btn-default"
+                                    data-dismiss="modal">
+                                确定
+                            </button>
+                            <button type="button" class="btn btn-default btn_close" data-dismiss="modal">
+                                取消
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 医生 -->
+            <div class="modal fade" id="modal_Doctor" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close btn_md_close"
+                                    data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                医生
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="checkbox" style="border: 1px solid #ccc;padding: 5px;border-radius: 5px">
+                                <input id="newdoctormobile" type="hidden" value="" />
+                                <label><input id="checkdocutor" type="checkbox" value=""><span class="label label-default margin-w5">医生</span><span id="docutorDetail">田某</span></label>
+                            </div>
+                            <label><input id="printnum" type="text" class="form-control" placeholder="入组人数"></label>
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button type="button" class="btn btn-default"
+                                    data-dismiss="modal" id="addnewdocutor">
+                                确定
+                            </button>
+                            <button type="button" class="btn btn-default btn_md_close"
+                                    data-dismiss="modal">
+                                取消
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!--移除成员 -->
+            <div class="modal fade" id="del_member" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                移出成员
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            确定要将&nbsp;<span id="ycdoctorname"></span>&nbsp;从项目里移出吗？
+                        </div>
+                        <div class="modal-footer">
+                            <button id="ycdoctor" type="button" class="btn btn-default">确定</button>
+                            <button type="button" class="btn btn-default btn_dm_close">取消</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+            <!-- 移至医生 -->
+            <div class="col-sm-6 col-md-3 margin-t10 move_to_doctor" style="display:none;">
+                <div class="panel panel-default pad-h10">
+                    <p class="pad-w20 margin-t10" style="margin-bottom: 0">
+                        医生名称
+                    </p>
+                    <div class="panel-body">
+                        <input type="text" class="form-control" placeholder="输入关键字进行过滤">
+                    </div>
+                    <div id="addtodoctorlist" style="border:1px solid #ccc;border-radius: 5px; margin-left: 15px;margin-right: 15px" class="pad-w10">
+                    </div>
+                    <button type="button" class="btn btn-default margin-w20 margin-t10 btn_save_doctor">保存</button>
+                </div>
+            </div>
+            <!-- 聊天弹框 -->
+            <div class="modal fade" id="modal_message" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close btn_close_message">
+                                ×
+                            </button>
+                            <h4 class="modal-title cCenter" id="dm-name">pi80-1</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="message-box" style="margin-bottom:30px" id="messageDetailList">
+                                <div class="message-box-line">
+                                    <p class="color999 margin-h10 cCenter">2015-12-10 12:54:56</p>
+                                    <div class="margin-t10">
+                                        <span class="head-pic-sm pull-left">
+                                            <img src="../images/head-sm.jpg">
+                                        </span>
+                                        <div class="margin-w50" style="overflow:auto">
+                                            <span class="colorfff left-message margin-w10 pull-left">
+                                                <span class="left-message-before"></span>doc1:123
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="message-box-line">
+                                    <p class="color999 margin-h10 cCenter">2015-12-21 10:01:30</p>
+                                    <div class="margin-t10">
+                                        <span class="head-pic-sm pull-left">
+                                            <img src="../images/head-sm.jpg">
+                                        </span>
+                                        <div class="margin-w50" style="overflow:auto">
+                                            <span class="colorfff left-message margin-w10 pull-left">
+                                                <span class="left-message-before"></span>pi80-1:111
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <textarea id="messageContextArea" class="form-control col-xs-12" rows="2" placeholder="请输入消息内容"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="text-align: left">
+                            <button id="NewMessageSend" type="button" class="btn btn-primary">
+                                发布
+                            </button>
+                            <button type="button" class="btn btn-default">
+                                取消
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 弹框 end -->
+        </div>
+    </div>
+    <!-- 页面内容 end -->
+    <!-- 弹出框背景 -->
+    <input type="hidden" value=@ViewBag.Token id="hdnToken" />
+    <div class="modalsBg" style="display: none;"></div>
+    <script type="text/javascript">
+        //关闭弹出框公用方法
+        function clone(classs) {
+            $("." + classs).css("display", "none");
+            $("." + classs).hide();
+        }
+        function ethnic(race) {
+            var ethnics = "";
+
+            if (race == "0") {
+                ethnics = "未知";
+            }
+            if (race == "1") {
+                ethnics = "汉族";
+            }
+            if (race == "2") {
+                ethnics = "蒙古族";
+            }
+            if (race == "3") {
+                ethnics = "回族";
+            }
+            if (race == "4") {
+                ethnics = "藏族";
+            }
+            if (race == "5") {
+                ethnics = "维吾尔族";
+            }
+            if (race == "6") {
+                ethnics = "苗族";
+            }
+            if (race == "7") {
+                ethnics = "彝族";
+            }
+            if (race == "8") {
+                ethnics = "壮族";
+            }
+            if (race == "9") {
+                ethnics = "布依族";
+            }
+            if (race == "10") {
+                ethnics = "朝鲜族";
+            }
+            if (race == "11") {
+                ethnics = "满族";
+            }
+            if (race == "12") {
+                ethnics = "侗族";
+            }
+            if (race == "13") {
+                ethnics = "瑶族";
+            }
+            if (race == "14") {
+                ethnics = "白族";
+            }
+            if (race == "15") {
+                ethnics = "土家族";
+            }
+            if (race == "16") {
+                ethnics = "哈尼族";
+            }
+            if (race == "17") {
+                ethnics = "哈萨克族";
+            }
+            if (race == "18") {
+                ethnics = "傣族";
+            }
+            if (race == "19") {
+                ethnics = "黎族";
+            }
+            if (race == "20") {
+                ethnics = "僳僳族";
+            }
+            if (race == "21") {
+                ethnics = "佤族";
+            }
+            if (race == "22") {
+                ethnics = "畲族";
+            }
+            if (race == "23") {
+                ethnics = "高山族";
+            }
+            if (race == "24") {
+                ethnics = "拉祜族";
+            }
+            if (race == "25") {
+                ethnics = "水族";
+            }
+            if (race == "26") {
+                ethnics = "东乡族";
+            }
+            if (race == "27") {
+                ethnics = "纳西族";
+            }
+            if (race == "28") {
+                ethnics = "景颇族";
+            }
+            if (race == "29") {
+                ethnics = "柯尔克孜族";
+            }
+            if (race == "30") {
+                ethnics = "土族";
+            }
+            if (race == "31") {
+                ethnics = "达斡尔族";
+            }
+            if (race == "32") {
+                ethnics = "仫佬族";
+            }
+            if (race == "33") {
+                ethnics = "羌族";
+            }
+            if (race == "34") {
+                ethnics = "布朗族";
+            }
+            if (race == "35") {
+                ethnics = "撒拉族";
+            }
+            if (race == "36") {
+                ethnics = "毛南族";
+            }
+            if (race == "37") {
+                ethnics = "仡佬族";
+            }
+            if (race == "38") {
+                ethnics = "锡伯族";
+            }
+            if (race == "39") {
+                ethnics = "阿昌族";
+            }
+            if (race == "40") {
+                ethnics = "普米族";
+            }
+            if (race == "41") {
+                ethnics = "塔吉克族";
+            }
+            if (race == "42") {
+                ethnics = "怒族";
+            }
+            if (race == "43") {
+                ethnics = "乌孜别克族";
+            }
+            if (race == "44") {
+                ethnics = "俄罗斯族";
+            }
+            if (race == "45") {
+                ethnics = "鄂温克族";
+            }
+            if (race == "46") {
+                ethnics = "德昂族";
+            }
+            if (race == "47") {
+                ethnics = "保安族";
+            }
+            if (race == "48") {
+                ethnics = "裕固族";
+            }
+            if (race == "49") {
+                ethnics = "京族";
+            }
+            if (race == "50") {
+                ethnics = "塔塔尔族";
+            }
+            if (race == "51") {
+                ethnics = "独龙族";
+            }
+            if (race == "52") {
+                ethnics = "鄂伦春族";
+            }
+            if (race == "53") {
+                ethnics = "赫哲族";
+            }
+            if (race == "54") {
+                ethnics = "门巴族";
+            }
+            if (race == "55") {
+                ethnics = "珞巴族";
+            }
+            if (race == "56") {
+                ethnics = "基诺族";
+            }
+            ///////////////////////////////////////////////////////////
+            if (race.indexOf("汉") > -1) {
+                ethnics = "1";
+            }
+            if (race.indexOf("蒙古") > -1) {
+                ethnics = "2";
+            }
+            if (race.indexOf("回") > -1) {
+                ethnics = "3";
+            }
+            if (race.indexOf("藏") > -1) {
+                ethnics = "4";
+            }
+            if (race.indexOf("维吾尔") > -1) {
+                ethnics = "5";
+            }
+            if (race.indexOf("维吾尔") > -1) {
+                ethnics = "6";
+            }
+            if (race.indexOf("彝") > -1) {
+                ethnics = "7";
+            }
+            if (race.indexOf("壮") > -1) {
+                ethnics = "8";
+            }
+            if (race.indexOf("布依") > -1) {
+                ethnics = "9";
+            }
+            if (race.indexOf("朝鲜") > -1) {
+                ethnics = "10";
+            }
+            if (race.indexOf("满") > -1) {
+                ethnics = "11";
+            }
+            if (race.indexOf("侗") > -1) {
+                ethnics = "12";
+            }
+            if (race.indexOf("瑶") > -1) {
+                ethnics = "13";
+            }
+            if (race.indexOf("白") > -1) {
+                ethnics = "14";
+            }
+            if (race.indexOf("土家") > -1) {
+                ethnics = "15";
+            }
+            if (race.indexOf("哈尼") > -1) {
+                ethnics = "16";
+            }
+            if (race.indexOf("哈萨克") > -1) {
+                ethnics = "17";
+            }
+            if (race.indexOf("傣") > -1) {
+                ethnics = "18";
+            }
+            if (race.indexOf("黎") > -1) {
+                ethnics = "19";
+            }
+            if (race.indexOf("僳僳") > -1) {
+                ethnics = "20";
+            }
+            if (race.indexOf("佤") > -1) {
+                ethnics = "21";
+            }
+            if (race.indexOf("畲") > -1) {
+                ethnics = "22";
+            }
+            if (race.indexOf("高山") > -1) {
+                ethnics = "23";
+            }
+            if (race.indexOf("拉祜") > -1) {
+                ethnics = "24";
+            }
+            if (race.indexOf("水") > -1) {
+                ethnics = "25";
+            }
+            if (race.indexOf("东乡") > -1) {
+                ethnics = "26";
+            }
+            if (race.indexOf("纳西") > -1) {
+                ethnics = "27";
+            }
+            if (race.indexOf("景颇") > -1) {
+                ethnics = "28";
+            }
+            if (race.indexOf("柯尔克孜") > -1) {
+                ethnics = "29";
+            }
+            if (race.indexOf("土") > -1) {
+                ethnics = "30";
+            }
+            if (race.indexOf("达斡尔") > -1) {
+                ethnics = "31";
+            }
+            if (race.indexOf("仫佬") > -1) {
+                ethnics = "32";
+            }
+            if (race.indexOf("羌") > -1) {
+                ethnics = "33";
+            }
+            if (race.indexOf("布朗") > -1) {
+                ethnics = "34";
+            }
+            if (race.indexOf("撒拉") > -1) {
+                ethnics = "35";
+            }
+            if (race.indexOf("毛南") > -1) {
+                ethnics = "36";
+            }
+            if (race.indexOf("仡佬") > -1) {
+                ethnics = "37";
+            }
+            if (race.indexOf("锡伯") > -1) {
+                ethnics = "38";
+            }
+            if (race.indexOf("阿昌") > -1) {
+                ethnics = "39";
+            } if (race.indexOf("普米") > -1) {
+                ethnics = "40";
+            }
+            if (race.indexOf("塔吉克") > -1) {
+                ethnics = "41";
+            }
+            if (race.indexOf("怒") > -1) {
+                ethnics = "42";
+            }
+            if (race.indexOf("乌孜别克") > -1) {
+                ethnics = "43";
+            }
+            if (race.indexOf("俄罗斯") > -1) {
+                ethnics = "44";
+            }
+            if (race.indexOf("鄂温克") > -1) {
+                ethnics = "45";
+            }
+            if (race.indexOf("德昂") > -1) {
+                ethnics = "46";
+            }
+            if (race.indexOf("保安") > -1) {
+                ethnics = "47";
+            }
+            if (race.indexOf("裕固") > -1) {
+                ethnics = "48";
+            }
+            if (race.indexOf("京") > -1) {
+                ethnics = "49";
+            }
+            if (race.indexOf("塔塔尔") > -1) {
+                ethnics = "50";
+            }
+            if (race.indexOf("独龙") > -1) {
+                ethnics = "51";
+            }
+            if (race.indexOf("鄂伦春") > -1) {
+                ethnics = "52";
+            }
+            if (race.indexOf("赫哲") > -1) {
+                ethnics = "53";
+            }
+            if (race.indexOf("门巴") > -1) {
+                ethnics = "54";
+            }
+            if (race.indexOf("珞巴") > -1) {
+                ethnics = "55";
+            }
+            if (race.indexOf("基诺") > -1) {
+                ethnics = "56";
+            }
+
+            return ethnics;
+
+        }
+
+        function ajaxFileUploads() {
+
+            $("#loading").ajaxStart(function () {
+                $(this).show();
+            })//开始上传文件时显示一个图片
+            .ajaxComplete(function () {
+                $(this).hide();
+            });//文件上传完成将图片隐藏起来
+
+            $.ajaxFileUpload({
+                url: '/F8YLUCenter/UploadAvatar',//后台处理的action
+                secureuri: false,
+                fileElementId: 'file',//上传的控件名
+                dataType: 'text',
+                success: function (data, status) {
+                    $("#mydiv").html(data);
+                },
+                error: function (data, status, e) {
+                    $("#mydiv").html(data + "   " + e);
+                }
+            })
+
+            return false;
+        }
+
+        $(document).ready(function () {
+
+            //跳转到message
+            $("#patentdatas").click(function () {
+                window.location.href = "/F8YLMessage/MessageIndex?pageType=2&projectId=" + $("#projectId").val() + "&hospitalId=" + $("#hospitalnum").val() + "&patientId=" + $("#patientNames").attr("name");
+            })
+
+            //$("#piTemplate").click(function () {
+            //    $.get("/F8YLProject/DownloadTemplate", { templateName: "模板-病人导入.xls" },
+            //  function (data) {
+
+            //  });
+            //})
+            //初始化事件选框
+            $('.input-time').datepicker({
+                autoclose: !0,
+                language: "zh-CN",
+                format: "yyyy-mm-dd"
+            });
+            //添加参与医院
+            $(".btn_add_hospitals").click(function () {
+                $(".choose-p2-hospitals").css("display", "block");
+            })
+            //选择医生
+            $(document).on("click", ".chk-c-doctor", function () {
+                $("#modal_Doctor").modal("show");
+                //$("#modal_Doctor").addClass("in");
+
+                //医生
+                $("#docutorDetail").text($(this).val());
+                $("#docutorDetail").attr("name", $(this).attr("id"));
+                $("#newdoctormobile").val($(this).attr("name"));
+            })
+            //选择医院pi
+            $(".choose-patient > li").click(function () {
+                $("#join_hospitals_pi").css("display", "block");
+                $("#join_hospitals_pi").addClass("in");
+            })
+            //关闭选择医院pi
+            $(".btn_close").click(function () {
+                $("#join_hospitals_pi").css("display", "none");
+                $("#join_hospitals_pi").removeClass("in");
+            })
+            //添加参与医院关闭按钮
+            $(".btn_cp2_close").click(function () {
+                $(".choose-p2-hospitals").css("display", "none");
+            })
+            //模板查看病史
+            $(".u-Mhistory > li").click(function () {
+                $(".t-medical-history").css("display", "block");
+                $(".t-panel4").css("display", "none");
+            })
+            //返回模板
+            $(".mh_back").click(function () {
+                //先保存数据后返回
+                $(".t-medical-history").css("display", "none");
+                $(".t-panel4").css("display", "block");
+            })
+            //项目成员按钮
+            $(".btn_add_member").click(function () {
+                //如果项目成员为主pi 则选择医院 否则不选医院直接选择成员
+                //var power = 0;//权限
+                var power = $("#roleNo").val();
+                if (power < 80) {
+                    $(".penal-hospitals").css("display", "block");
+                }
+                else {
+                    $(".h-Name").css("display", "none");//隐藏医院名称
+                    $(".choose-member").css("display", "block");
+                }
+            })
+            //根据医院选择成员
+            $(".u-hospitals > li").click(function () {
+                $(".choose-member").css("display", "block");
+                $(".penal-hospitals").css("display", "none");
+            })
+            //添加成员tab切换
+            $(".tab_one span").click(function () {
+                $(this).addClass("active").siblings().removeClass("active");
+                var tab = $(this).attr("data-tab");
+                $(".tab").css("display", "none");
+                $("." + tab).css("display", "block");
+            })
+            //新增成员
+            $(".btn_cm_add_member").click(function () {
+                $(".choose-doctor").css("display", "block");
+            })
+            //添加患者
+            $(".btn_w_information").click(function () {
+                //清空患者资料
+                $("#patientnum_il").val("");
+                $("#patientName").val("");
+                $("#patientIdCard").val("");
+                $("#patientage").val("");
+                $("#patientheight").val("");
+                $("#patientweight").val("");
+                $("#patientMobile").val("");
+                $("#patienttel").val("");
+                $("#patientaddress").val("");
+            })
+            //填写患者资料
+            $(".btn_w_information").click(function () {
+                //$(".modalsBg").css("display", "block");
+                //$(".add_patient_data").css("display", "block");
+                //$(".add_patient_data").removeClass("fadeInUp animated-500");
+                //$(".add_patient_data").addClass("fadeInDown animated-500");
+                $("#recordPatientId").val("");//清空标识
+
+                $("#patientMobile").attr("readonly", false);
+                $("#patientIdCard").attr("readonly", false);
+                $("#patientage").attr("readonly", false);
+                //$("#patientnum_il").attr("readonly", false);
+
+                if ($("#roleNo").val() == "10") {
+                    $("#selectdoctor").html("<option name=\"" + $("#userId").val() + "\">" + $("#sessionUserName").val() + "</option>");
+                }
+                else {
+                    //绑定医生列表
+                    $.ajax({
+                        //url: "/F8YLProject/getdoctorlisttest?hospitalId=" + $("#hospitalnum").val(),
+                        url: "/F8YLProject/relativeDoctor?hospitalId=" + $("#selectedhospitalid").val() + "&projectid=" + $("#projectId").val(),
+                        type: "GET",
+                        dataType: "json",
+                        success: function (retData) {
+                            if (retData.code == 0) {
+                                var strhtml = "";
+
+                                $.each(retData.data, function (i, item) {
+                                    strhtml += "<option name=\"" + item.doctorid + "\">" + item.username + "</option>";
+                                })
+
+                                $("#selectdoctor").html(strhtml);
+
+                            }
+                            else {
+                                alert(retData.message);
+                            }
+                        },
+                        error: function (e) {
+
+                        }
+                    })
+                }
+
+
+            })
+            //医院成员查看卡
+            //$(".hospital_members > li").click(function () {
+            $(document).on("click", ".hospital_members > li", function () {
+                var top = $(this).offset().top + 40;
+                $(".tab_Doctor").css("top", top);
+                $(".tab_Doctor").css("display", "block");
+
+                $("#doctorimg").attr("src", $(this).find("img").eq(0).attr("src"));
+
+                //alert($(this).attr("name"));
+
+                //资料
+                $("#doctorname").text($(this).attr("name").split('/')[1]);
+                $("#doctorname").attr("name", $(this).attr("name").split('/')[0]);
+                //$("#doctormobile").text($(this).attr("name").split('/')[1]);
+
+                //判断是否是自己医院的医生
+                if ($("#sessionHospitalid").val() != $(this).attr("id")) {
+                    $("#doctormove").attr("display", "none");
+                }
+                else {
+                    $("#doctormove").attr("display", "block");
+                }
+
+
+                //判断是否是主PI
+                var user = $(this).attr("data-user");
+                if (user == "pi")
+                    $(".btn_td_yc").css("display", "none");
+                else
+                    $(".btn_td_yc").css("display", "block");
+            })
+
+            //查看患患者资料
+            $(".btn_tp_ck").click(function () {
+                var sex = "";
+                var ethnics = "";
+
+                //绑定医生列表
+                $.ajax({
+                    //url: "/F8YLProject/getdoctorlisttest?hospitalId=" + $("#hospitalnum").val(),
+                    url: "/F8YLProject/relativeDoctor?hospitalId=" + $("#selectedhospitalid").val() + "&projectid=" + $("#projectId").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            var strhtml = "";
+
+                            $.each(retData.data, function (i, item) {
+                                strhtml += "<option name=\"" + item.doctorid + "\">" + item.username + "</option>";
+                            })
+
+                            $("#selectdoctor").html(strhtml);
+
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+
+                //调用接口,查看成员资料
+                $.ajax({
+                    url: "/F8YLProject/getuserinformation?userId=" + $("#patientNames").attr("name"),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+
+                            if (retData.data != null) {
+
+                                $("#recordPatientId").val(retData.data.id)
+                                $("#patientName").val(retData.data.username);
+                                $("#patientMobile").val(retData.data.mobile);
+                                $("#patientIdCard").val(retData.data.idcard);
+                                $("#patientaddress").val(retData.data.address);
+
+                                $("#patientage").val(retData.data.age);//年龄
+                                $("#patientheight").val(retData.data.height);//shengao
+                                $("#patientweight").val(retData.data.weight);//体重
+                                $("#patienttel").val(retData.data.tel);//电话
+                                $("#selectdoctor").find("option[name='" + retData.data.doctorid + "']").attr("selected", true);//主治医生
+
+                                $("#patientnum_il").val(retData.data.num_ill);//住院号
+                                $("#selectsex").find("option[name='" + retData.data.sex + "']").attr("selected", true);
+                                $("#selectethnic").find("option[name='" + retData.data.ethnic + "']").attr("selected", true);//民族
+
+
+                                $("#patientMobile").attr("readonly", "readonly");
+                                $("#patientIdCard").attr("readonly", "readonly");
+                                $("#patientage").attr("readonly", "readonly");
+                                //$("#patientnum_il").attr("readonly", "readonly");
+
+
+                            }
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+            })
+
+            //查看医生资料
+            $(".btn_td_ck").click(function () {
+                $(".btn_pd_save").css("display", "none");
+                $("#doctorInformation").val($("#doctorname").attr("name"));
+                //调用接口,查看成员资料
+                $.ajax({
+                    url: "/F8YLProject/getuserinformation?userId=" + $("#doctorname").attr("name"),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            if (retData.data != null) {
+                                $("#hidden-userid").val(retData.data.id);
+                                $("#username").val(retData.data.username);
+                                $("#mobilephone").val(retData.data.mobile);
+                                $("#idcard").val(retData.data.idcard);
+                                $("#email").val(retData.data.email);
+                                $("#hospitalname").val(retData.data.hospital.title);
+                                $("#dept").val(retData.data.deptname);//科室
+                                $("#jobtitle").val(retData.data.duty);//职称
+                                $("#telphone").val(retData.data.tel);//电话
+                                $("#header-pic").attr("src","http://139.196.192.14" + retData.data.avatar);
+
+                                //$("#detailname").val(retData.data.username);
+                                //$("#detailmibile").val(retData.data.mobile);
+                                //$("#detailidcard").val(retData.data.idcard);
+                                //$("#detailemail").val(retData.data.email);
+                                //$("#detailhospital").val(retData.data.hospital.title);
+                                //$("#dept").val(retData.data.hospital.deptname);//科室
+                                //$("#jobtitle").val(retData.data.hospital.duty);//职称
+                                //$("#telphone").val(retData.data.hospital.tel);//电话
+
+                            }
+
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+
+            })
+            //移除医生
+            $(".btn_td_yc").click(function () {
+                $(".modalsBg").css("display", "block");
+                $("#del_member").css("display", "block");
+                $("#del_member").addClass("in");
+                $("#del_member").removeClass("fadeInUp animated-500");
+                $("#del_member").addClass("fadeInDown animated-500");
+
+                $("#ycdoctorname").text($("#doctorname").text());
+                $("#ycdoctorname").attr("name", $("#doctorname").attr("name") + "/doctor");
+            })
+
+            //移除患者
+            $(".btn_td_patentyc").click(function () {
+                $(".modalsBg").css("display", "block");
+                $("#del_member").css("display", "block");
+                $("#del_member").addClass("in");
+                $("#del_member").removeClass("fadeInUp animated-500");
+                $("#del_member").addClass("fadeInDown animated-500");
+
+
+                $("#ycdoctorname").text($("#patientNames").text());
+                $("#ycdoctorname").attr("name", $("#patientNames").attr("name") + "/patent");
+            })
+            //移除弹出框关闭
+            $(".btn_dm_close").click(function () {
+                $("#del_member").removeClass("fadeInDown animated-500");
+                $("#del_member").addClass("fadeInUp animated-500");
+                setTimeout(function () {
+                    $(".modalsBg").css("display", "none");
+                    $("#del_member").css("display", "none");
+                }, 500);
+            })
+            //患者查看卡
+
+            $(document).on("click", ".patient_members > li", function () {
+                //$(".patient_members > li").click(function () {
+                var top = $(this).offset().top + 40;
+                $(".tab_Patient").css("top", top);
+                $(".tab_Patient").css("display", "block");
+                $("#paitentimg").attr("src", $(this).find("img").eq(0).attr("src"));
+                //name=patientinfo.id/patientinfo.mobile/patientinfo.username
+
+                $("#patientNames").text($(this).attr("name").split('/')[2]);
+                $("#patientNames").attr("name", ($(this).attr("name").split('/')[0]));
+                $("#patientmobiles").text($(this).attr("name").split('/')[1]);
+
+                //调用接口,查看成员资料
+                $.ajax({
+                    url: "/F8YLProject/getuserinformation?userId=" + $("#patientNames").attr("name"),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+
+                            if (retData.data != null) {
+                                if (retData.data.hospitalid != $("#sessionHospitalid").val()) {
+                                    $("#zypatient").css("display", "none");
+                                    $("#ycpatient").css("display", "none");
+                                }
+                                else {
+                                    $("#zypatient").css("display", "block");
+                                    $("#ycpatient").css("display", "block");
+                                }
+                            }
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+
+            })
+            //患者移至
+            $(".btn_td_yz").click(function () {
+                var top = $(this).offset().top - 80;
+                $(".move_to_doctor").css("top", top);
+                $(".move_to_doctor").css("right", "20%");
+                $(".move_to_doctor").css("display", "block");
+
+                //addtodoctorlist
+
+                $.ajax({
+                    url: "/F8YLProject/getdoctorlisttest?hospitalId=" + $("#hospitalnum").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            var strhtml = "";
+
+                            $.each(retData.data.data, function (i, item) {
+                                strhtml += "<div class=\"checkbox\"><label><input type=\"checkbox\" class=\"tt\" value=\"" + item.id + "\">" + item.username + "</label></div>"
+                            })
+
+                            $("#addtodoctorlist").html(strhtml);
+
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+
+            })
+
+            $(document).on("click", ".tt", function () {
+                $("#addtodoctorlist :checkbox").not($(this)).attr("checked", false);
+            })
+
+
+            //保存患者移至医生
+            $(".btn_save_doctor").click(function () {
+
+                //调用接口,查看成员资料(需要返回old医生ID)
+                //$.ajax({
+                //    url: "/F8YLProject/getuserinformation?userId=" + $("#patientNames").attr("name"),
+                //    type: "GET",
+                //    dataType: "json",
+                //    success: function (retData) {
+                //        if (retData.code == 0) {
+
+                //            if (retData.data != null) {
+
+                //            }
+                //        }
+                //        else {
+                //            alert(retData.message);
+                //        }
+                //    },
+                //    error: function (e) {
+
+                //    }
+                //})
+
+                //$(".tt").attr("checked")
+                var ss = $("#addtodoctorlist :checkbox:checked").val();
+
+                $.ajax({
+                    url: "/F8YLProject/patientmove?hospitalId=" + $("#hospitalnum").val() + "&patientId=" + $("#patientNames").attr("name") + "&doctorid_old=" + ss + "&doctorid_old=" + "",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+
+                //保存
+                $(".move_to_doctor").css("display", "none");
+
+
+
+            })
+            //关闭患者查看卡
+            $(".btn_tp_close").click(function () {
+                $(".tab_Patient").css("display", "none");
+            })
+            //关闭医院成员查看卡
+            $(".btn_td_close").click(function () {
+                $(".tab_Doctor").css("display", "none");
+            })
+            //关闭弹出层
+            //$(".btn_ad_close").click(function () {
+            //    $(".add_patient_data").removeClass("fadeInDown animated-500");
+            //    $(".add_patient_data").addClass("fadeInUp animated-500");
+            //    setTimeout(function () {
+            //        $(".modalsBg").css("display", "none");
+            //        $(".add_patient_data").css("display", "none");
+            //    }, 500);
+            //})
+            //关闭新增成员
+            $(".btn_cd_close").click(function () {
+                $(".choose-doctor").css("display", "none");
+            })
+            //关闭根据医院选择成员
+            $('.btn_cm_back').click(function () {
+                $(".choose-member").css("display", "none");
+            })
+            //关闭选择医院
+            $(".btn_h_back").click(function () {
+                $(".penal-hospitals").css("display", "none");
+            })
+            //关闭医院成员
+            $(".btn_ch_back").click(function () {
+                $(".choose-hospitals").css("display", "none");
+            })
+        })
+        //个人管理
+        $(function () {
+            //个人管理
+            $("#btn_user").click(function () {
+                var show = $("#user_settings").css("display");
+                if (show == "none")
+                    $("#user_settings").css("display", "block");
+                else
+                    $("#user_settings").css("display", "none");
+            })
+
+            $(".btn_settings").click(function () {
+                $.ajax({
+                    url: "/F8YLUCenter/GetUserInfo?userid=@userProfileInfo.id",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            $("#username").val(retData.data.username);
+                            $("#dept").val(retData.data.deptname);
+                            $("#jobtitle").val(retData.data.duty);
+                            $("#mobilephone").val(retData.data.mobile);
+                            $("#telphone").val(retData.data.tel);
+                            $("#idcard").val(retData.data.idcard);
+                            $("#email").val(retData.data.email);
+                            $("#hospitalname").val(retData.data.hospital.title);
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+            })
+        });
+
+
+        //项目详情
+        $(function () {
+            //点击医院显示医生列表和病人列表
+            $("#allhospitallist li").click(function () {
+
+                $(".hospital_members").html("");
+                $("#patientList").html("");
+
+                //hospitaltext
+                $("#hospitaltext").text($(this).text());
+
+                var hospitalId = $(this).attr("name");
+                //alert(hospitalId);
+                $("#selectedhospitalid").val(hospitalId);
+
+                //判断是否是同一家医院
+                if (hospitalId != $("#sessionHospitalid").val()) {
+                    $(".btn_cm_add_member").css("display", "none");
+                }
+                else {
+                    $(".btn_cm_add_member").css("display", "block");
+                }
+
+
+                //alert($("#hospitalnum").val() + "//" + hospitalId);
+
+                if ($("#sessionHospitalid").val() != hospitalId) {
+                    $(".btn_w_information").css("display", "none");
+                    $("#importpatientadd").css("display", "none");
+                    $("#importpatient").css("display", "none");
+                    $("#piTemplate").css("display", "none");
+                    //$("#patientinformation").css("display", "none");
+                }
+                else {
+                    $(".btn_w_information").css("display", "block");
+                    $("#importpatientadd").css("display", "block");
+                    $("#importpatient").css("display", "block");
+                    $("#piTemplate").css("display", "block");
+                    //$("#patientinformation").css("display", "block");
+                }
+
+                //查询病人
+                $.ajax({
+                    url: "/F8YLProject/relativePatient?hospitalId=" + hospitalId + "&projectid=" + $("#projectId").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            var strhtml = "";
+                            $.each(retData.data, function (i, item) {
+                                strhtml += "<li name=\"" + item.patientid + "/" + item.user.mobile + "/" + item.user.username + "\"><div class=\"col-xs-7\"><div class=\"row\"><span class=\"head-pic-sm\"><img style=\"border-radius:5px;\" src=http://139.196.192.14" + item.user.avatar + "></span><span class=\"margin-w10\">" + item.user.username + "</span></div></div><div class=\"col-xs-5 text-right\" style=\"line-height: 2.6;\"><img class=\"margin-w5 initial\" src=\"../images/icon17.png\">" + item.user.age + "岁</div></li>";
+                            })
+
+                            $("#patientList").html(strhtml);
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+
+                //查询医生列
+                $.ajax({
+                    url: "/F8YLProject/relativeDoctor?hospitalId=" + hospitalId + "&projectid=" + $("#projectId").val(),
+                    //url: "/F8YLProject/getdoctorlisttest?hospitalId=" + $("#hospitalnum").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            var strhtml = "";
+                            var strhtmldoctor = "";
+                            $.each(retData.data, function (i, item) {
+                                strhtmldoctor += "<li data-user=\"ys\" name=\"" + item.doctorid + "/" + item.user.mobile + "/" + item.username + "\"><div id=" + item.doctorid + " class=\"col-xs-8\"><div class=\"row\"><span class=\"head-pic-sm\"><img style=\"border-radius:5px;\" src=http://139.196.192.14" + item.user.avatar + "></span><span class=\"margin-w10\">" + item.user.username + "</span></div></div><div class=\"col-xs-4\" style=\"line-height: 2.6;\"></div></li>";
+
+                                //strhtml += "<div class=\"checkbox\"><label><input type=\"checkbox\" class=\"chk-c-doctor\" id=\"" + item.id + "\" value=\"" + item.username + "\" name=\"" + item.mobile + "\">" + item.username + "</label></div>";
+                            })
+
+                            //$("#docutorlist").html(strhtml);
+
+                            $(".hospital_members").html(strhtmldoctor);
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+
+                //查询医生列表用于新增
+                $.ajax({
+                    //url: "/F8YLProject/relativeDoctor?hospitalId=" + hospitalId + "&projectid=" + $("#projectId").val(),
+                    url: "/F8YLProject/getdoctorlisttest?hospitalId=" + hospitalId,
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            var strhtml = "";
+                            var strhtmldoctor = "";
+                            $.each(retData.data.data, function (i, item) {
+                                //strhtmldoctor += "<li data-user=\"ys\" name=\"" + item.id + "/" + item.mobile + "/" + item.username + "\"><div class=\"col-xs-8\"><div class=\"row\"><span class=\"head-pic-sm\"><img style=\"border-radius:5px;\" src=\"../images/head-sm.jpg\"></span><span class=\"margin-w10\">" + item.username + "</span></div></div><div class=\"col-xs-4\" style=\"line-height: 2.6;\"></div></li>";
+
+                                strhtml += "<div class=\"checkbox\"><label><input type=\"checkbox\" class=\"chk-c-doctor\" id=\"" + item.id + "\" value=\"" + item.username + "\" name=\"" + item.mobile + "\">" + item.username + "</label></div>";
+                            })
+
+                            $("#docutorlist").html(strhtml);
+
+                            //$(".hospital_members").html(strhtmldoctor);
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+
+            })
+
+            //新增医院/pi
+            $("#hospitalli li").click(function () {
+
+                $("#picheckboxx").val($(this).attr("id"));
+                $("#piname").text($(this).text());
+                $("#piname").attr("name", $(this).attr("name"))
+            })
+
+            //确定提交医院Pi
+            $("#piAppend").click(function () {
+                //name=pi.id/pi.username/hospitalname/pi.num_goal
+                var total = 0;
+
+                //判断入组人数总数
+                $("div[type='piList']").each(function (key, value) {
+                    total += parseInt($(this).attr("name").split('/')[3]);
+                })
+
+                if (total + parseInt($("#pinum").val()) > parseInt($("#groupnum").val())) {
+                    alert("Pi总入组人数不能大于项目入组人数！");
+                    return false;
+                }
+
+                var overwrite = false;
+                //alert($("#picheckboxx").is(':checked'));
+
+                if ($("#picheckboxx").is(':checked') == true) {
+                    overwrite = true;
+                }
+
+                if ($.trim($("#pinum").val()) == "") {
+                    alert("请输入入组人数！");
+                    return;
+                }
+
+                //$("#picheckboxx").val() 医院ID，projectId项目id
+                $.ajax({
+                    url: "/F8YLProject/getPiAppend?piId=" + $("#picheckboxx").val() + "&projectId=" + $("#projectId").val() + "&overwrite=" + overwrite + "&num_goal=" + $("#pinum").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+
+                            //判断是否已经存在该医院,先移除后新增
+                            var ycname = $("#piname").attr("name").split('/')[0];
+                            //$("#hospitallist").remove("div [name='" + ycname + "']");$("div[name='hand']")
+                            $("div[name='" + ycname + "']").remove();
+
+                            var strhtml = $("#hospitallist").html();
+                            strhtml += "<div class=\"input-group\" style=\"margin-bottom:10px;\" name=\"" + ycname + "\"><input type=\"hidden\" value=\"\" id=\"hospitalid\" /><input id=\"hospitalName\" type=\"text\" class=\"form-control\" value=\"" + $("#piname").text() + "/" + $("#piname").attr("name").split('/')[1] + "\" data-toggle=\"modal\" data-target=\"#join_hospitals\" readonly=\"readonly\"><span class=\"input-group-btn\"><button class=\"btn btn-default border-left\" type=\"button\">0/0</button></span></div>";
+                            $("#hospitallist").html(strhtml);
+
+
+                            $("#join_hospitals_pi").css("display", "none");
+                            $("#join_hospitals_pi").removeClass("in");
+                            $(".choose-p2-hospitals").css("display", "none");
+
+                            alert(retData.message);
+                            window.location.href = '/F8YLProject/ProjectDetail?id=' + $("#projectId").val();
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+            })
+
+            //编辑参与医院
+            $(".input-group").click(function () {
+                //alert($(this).val());
+                //$("#selectoption").text($("#hospitalName").val());
+
+                //查询出医院pi
+                $.ajax({
+                    url: "/F8YLProject/searchPi?hospitalId=" + $(this).attr("name"),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            //selectoption <option>默认创建项目的医院</option>
+                            if (retData.data.data != null) {
+                                var strhtml = "";
+                                $.each(retData.data.data, function (i, item) {
+                                    strhtml += "<option name=\"" + item.id + "/" + item.hospitalid + "\">" + item.username + "</option>";
+                                })
+                                $("#selectoption").html(strhtml);
+                            }
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+
+                })
+
+            })
+
+            //编辑参与意愿
+            $("div[type='piList']").click(function () {
+
+                //name="pi.id/pi.username/hospitalname/pi.num_goal"
+                var strhtml = "<option name=\"\">" + $(this).attr("name").split('/')[1] + "/" + $(this).attr("name").split('/')[2] + "</option>";
+                $("#selectoption").html(strhtml);
+                //入组人数
+                $("#numgoals").val($(this).attr("name").split('/')[3]);
+                $("#numgoals").attr("name", $(this).attr("name").split('/')[0]);
+            })
+
+            //保存入组人数
+            $("#savenumgoal").click(function () {
+                $.ajax({
+                    url: "/F8YLProject/getPiAppend?piId=" + $("#numgoals").attr("name") + "&projectId=" + $("#projectId").val() + "&overwrite=" + true + "&num_goal=" + $("#numgoals").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+
+                            alert(retData.message);
+
+                            //window.location.href = '/F8YLProject/ProjectDetail?id=' + $("#projectId").val();
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+            })
+
+            //模板详情
+            $(".template-choose input[type=radio]").click(function () {
+                //$(".t-panel4").show();
+                $("#tpldeatilname").text($(this).val().split('/')[1] + "(" + $(this).val().split('/')[2] + ")");
+
+                //$("#tpldeatilname").text($(this).val());
+
+                var strhtml = "";
+                $.ajax({
+                    url: "/F8YLProject/getTplDetail?tplId=" + $(this).val().split('/')[0],
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        //alert("1235");
+                        //alert(JSON.stringify(retData));
+                        if (retData.code == 0) {
+
+                            if (retData.data.sharp != null) {
+                                $.each(retData.data.sharp, function (i, item) {
+
+                                    //strhtml += "<li>" + item.name + "</li>";
+                                    strhtml += "<li><p>" + item.name + "</p><ul>";
+                                    //循环添加sharpid内容
+                                    if (retData.data.tpl_detail != null) {
+
+                                        $.each(retData.data.tpl_detail, function (n, detailitem) {
+                                            if (detailitem.sharpid == item.id) {
+
+                                                //alert(JSON.stringify(detailitem.term.term_val.sort(getSortFun('desc', 'id'))))
+
+                                                //tpl_detail中数据详情
+
+                                                if (detailitem.term.term_val != null) {
+                                                    var p = 0;
+                                                    strhtml += "<li>" + detailitem.term.name;
+                                                    $.each(detailitem.term.term_val.sort(getSortFun('asc', 'sorter')), function (m, termterm_val) {
+
+                                                        //alert(detailitem.term.term_val.sort(getSortFun('desc', 'id')).length);
+
+                                                        if (detailitem.term.term_val.sort(getSortFun('asc', 'sorter')).length > 2) {
+                                                            strhtml += "<ul><li>" + termterm_val.desc + ":" + termterm_val.val + "</li></ul>";
+                                                        }
+
+                                                        else {
+                                                            p++;
+                                                            if (p == 1) {
+                                                                strhtml += "(" + termterm_val.val + " - ";
+                                                            }
+                                                            else {
+                                                                strhtml += termterm_val.val + ")";
+                                                            }
+                                                        }
+
+                                                    })
+                                                    strhtml += "</li>";
+                                                }
+                                            }
+
+                                        })
+                                    }
+                                    strhtml += "</ul></li>"
+                                })
+                            }
+
+                            $(".u-Mhistory").html(strhtml);
+                            $("#temp_yxa").modal('show');
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+
+            });
+
+            //排序方法
+            function getSortFun(order, sortBy) {
+                var ordAlpah = (order == 'asc') ? '>' : '<';
+                var sortFun = new Function('a', 'b', 'return a.' + sortBy + ordAlpah + 'b.' + sortBy + '?1:-1');
+                return sortFun;
+            }
+
+            //新增医生成员adddocuter
+            $("#adddocuter").click(function () {
+
+                if ($("#roleNo").val() == "80") {
+                    $.ajax({
+                        url: "/F8YLProject/getdoctorlisttest?hospitalId=" + $("#hospitalnum").val(),
+                        type: "GET",
+                        dataType: "json",
+                        success: function (retData) {
+                            if (retData.code == 0) {
+                                //alert(retData.message);
+                                var strhtml = "";
+                                $.each(retData.data.data, function (i, item) {
+                                    strhtml += "<div class=\"checkbox\"><label><input type=\"checkbox\" class=\"chk-c-doctor\" id=\"" + item.id + "\" value=\"" + item.username + "\" name=\"" + item.mobile + "\">" + item.username + "</label></div>"
+                                })
+
+                                $("#docutorlist").html(strhtml);
+
+                            }
+                            else {
+                                alert(retData.message);
+                            }
+                        },
+                        error: function (e) {
+
+                        }
+                    })
+                }
+            })
+
+            //新增医生addnewdocutor
+            $("#addnewdocutor").click(function () {
+
+                var overwrite = false;
+                if ($("#checkdocutor").is(':checked') == true) {
+                    overwrite = true;
+                }
+
+                $.ajax({
+                    url: "/F8YLProject/addDoctorAppend?projectId=" + $("#projectId").val() + "&doctorId=" + $("#docutorDetail").attr("name") + "&overwrite=" + overwrite + "&num_goal=" + $("#printnum").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+
+                            //移除重复
+                            var ycname = $("#docutorDetail").attr("name") + "/" + $("#newdoctormobile").val() + "/" + $("#docutorDetail").text();
+                            $(".hospital_members li").remove("li[name='" + ycname + "']");
+
+
+                            var strhtml = $(".hospital_members").html();
+                            strhtml += "<li data-user=\"ys\" name=\"" + $("#docutorDetail").attr("name") + "/" + $("#newdoctormobile").val() + "/" + $("#docutorDetail").text() + "\"><div class=\"col-xs-8\"><div class=\"row\"><span class=\"head-pic-sm\"><img style=\"border-radius:5px;\" src=\"../images/head-sm.jpg\"></span><span class=\"margin-w10\">" + $("#docutorDetail").text() + "</span></div></div><div class=\"col-xs-4\" style=\"line-height: 2.6;\">0/0</div></li>";
+                            $(".hospital_members").html(strhtml);
+
+                            $("#modal_Doctor").modal("hide");
+
+                            alert(retData.message);
+
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+                })
+
+            })
+
+            //uupdateproject修改项目名称
+            $("#updateprojectname").click(function () {
+                if ($("#newprojectname").val() == "") {
+                    alert("请输入项目名称！");
+                    return false;
+                }
+
+                $.ajax({
+                    url: "/F8YLProject/updateProjectName?projectId=" + $("#projectId").val() + "&projectName=" + $("#newprojectname").val() + "&num_goal=''",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            $("#projectname").text(retData.data.name);
+                            alert("项目名称修改成功!");
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+
+                })
+            })
+
+            //updateProjectnum_goal修改项目入组人数
+            $("#btngroupnum").click(function () {
+                if ($("#groupnum").val() == "") {
+                    alert("请输入入组人数！");
+                    return false;
+                }
+
+                $.ajax({
+                    url: "/F8YLProject/updateProjectnum_goal?projectId=" + $("#projectId").val() + "&projectName=''" + "&num_goal=" + $("#groupnum").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+
+                            alert("入组人数修改成功！");
+
+                            //设置入组人数
+                            $("#numgoal").val($("#groupnum").val());
+
+                            window.location.href = '/F8YLProject/ProjectDetail?id=' + $("#projectId").val();
+
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+
+                })
+            })
+
+            //给时间赋值
+            $("#data").click(function () {
+                $("#time-star").val($(this).text().split('~')[0]);
+                $("#time-end").val($(this).text().split('~')[1]);
+            })
+
+
+            //修改日期
+            $("#btncycle").click(function () {
+                if ($.trim($("#time-star").val()) == "") {
+                    alert("请输入开始日期！");
+                    return false;
+                }
+                if ($.trim($("#time-end").val()) != "") {
+                    var strdata = new Date($("#time-star").val().replace("-", "/"));
+                    var enddata = new Date($("#time-end").val().replace("-", "/"));
+
+                    if (strdata > enddata) {
+                        alert("开始日期不能大于结束日期！");
+                        return false;
+                    }
+                }
+
+                $.ajax({
+                    url: "/F8YLProject/updateProjectcycle?projectId=" + $("#projectId").val() + "&opendate=" + $("#time-star").val() + "&closedate=" + $("#time-end").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            $("#data").text(retData.data.opendate + "~" + retData.data.closedate);
+                            alert("项目日期修改成功！");
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+
+                })
+            })
+
+            //projectfiling项目归档
+            $("#projectfiling").click(function () {
+
+                $.ajax({
+                    url: "/F8YLProject/getprojectfiling?projectId=" + $("#projectId").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            alert("归档成功！");
+                            window.location.href = '/F8YLProject/ProjectList';
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+            })
+
+            //移除医生ycdoctor
+            $("#ycdoctor").click(function () {
+
+                if ($("#ycdoctorname").attr("name").split('/')[1] == "doctor") {
+                    $.ajax({
+                        url: "/F8YLProject/removeDoctor?projectId=" + $("#projectId").val() + "&doctorId=" + $("#ycdoctorname").attr("name").split('/')[0],
+                        type: "GET",
+                        dataType: "json",
+                        success: function (retData) {
+                            if (retData.code == 0) {
+
+                                $(".modalsBg").css("display", "none");
+                                $("#del_member").css("display", "none");
+                                $(".tab_Doctor").css("display", "none");
+
+
+                                //doctorname,doctormobile
+                                var ycname = $("#ycdoctorname").attr("name").split('/')[0] + "/" + $("#doctorname").text();
+                                //$("li[name='" + ycname + "']").remove();
+                                $(".hospital_members li").remove("li[name='" + ycname + "']");
+
+                                alert(retData.message);
+                            }
+                            else {
+                                alert(retData.message);
+                            }
+                        },
+                        error: function (e) {
+
+                        }
+
+                    })
+                }
+                //移除患者
+                if ($("#ycdoctorname").attr("name").split('/')[1] == "patent") {
+                    $.ajax({
+                        url: "/F8YLProject/removePatent?projectId=" + $("#projectId").val() + "&patentId=" + $("#ycdoctorname").attr("name").split('/')[0],
+                        type: "GET",
+                        dataType: "json",
+                        success: function (retData) {
+                            if (retData.code == 0) {
+
+                                var ycname = $("#ycdoctorname").attr("name").split('/')[0] + "/" + $("#patientmobiles").text() + "/" + $("#patientNames").text();
+
+                                $(".patient_members li").remove("li[name='" + ycname + "']");
+
+                                $(".modalsBg").css("display", "none");
+                                $("#del_member").css("display", "none");
+                                $(".tab_Patient").css("display", "none");
+
+                                alert(retData.message);
+
+
+                            }
+                            else {
+                                alert(retData.message);
+                            }
+                        },
+                        error: function (e) {
+
+                        }
+
+                    })
+                }
+
+            })
+
+            //添加病人资料
+            $("#addnewpatient").click(function () {
+
+                ////清空患者资料
+                //$("#patientnum_il").val("");
+                //$("#patientName").val("");
+                //$("#patientIdCard").val("");
+                //$("#patientage").val("");
+                //$("#patientheight").val("");
+                //$("#patientweight").val("");
+                //$("#patientMobile").val("");
+                //$("#patienttel").val("");
+                //$("#patientaddress").val("");
+
+                var patientName = $("#patientName").val();
+                var patientIdCard = $("#patientIdCard").val();
+                var patientMobile = $("#patientMobile").val();
+                var patientaddress = $("#patientaddress").val();
+                var userid = $("#recordPatientId").val();
+
+                var sex = $("#selectsex option:selected").attr("name");
+                var ethnics = $("#selectethnic option:selected").attr("name");//民族
+
+                var doctorid = $("#selectdoctor option:selected").attr("name");
+
+                var height = $("#patientheight").val();
+                var weight = $("#patientweight").val();
+                var address = $("#patientaddress").val();
+                var tel = $("#patienttel").val();
+                var mobile = $("#patientMobile").val();
+
+                var num_il = $("#patientnum_il").val();
+
+                //alert($("#selectdoctor option:selected").attr("name"));
+
+                if ($.trim(patientName) == "") {
+                    alert("请输入用户名！");
+                    return;
+                }
+                if ($.trim(patientIdCard) == "") {
+                    alert("请输入身份证号！");
+                    return;
+                }
+                if ($.trim(patientMobile) == "") {
+                    alert("请输入手机号！");
+                    return;
+                }
+
+
+                if ($("#recordPatientId").val() == "") {
+                    $.ajax({
+                        url: "/F8YLProject/addpatient?projectId=" + $("#projectId").val() + "&doctorId=" + doctorid + "&hospitalId=" + $("#hospitalnum").val() + "&patientId=" + "" + "&userName=" + $("#patientName").val() + "&mobile=" + $("#patientMobile").val() + "&idCard=" + $("#patientIdCard").val() + "&overwrite=" + false + "&height=" + height + "&weight=" + weight + "&address=" + address + "&tel=" + tel + "&num_il=" + num_il + "&ethnic=" + ethnics + "&sex=" + sex,
+                        type: "GET",
+                        dataType: "json",
+                        success: function (retData) {
+
+                            if (retData.code == 0) {
+                                var strhtml = $("#patientList").html();
+                                strhtml += "<li name=\"" + JSON.stringify(retData.data.patientid).replace("[", "").replace("]", "").replace("\"", "").replace("\"", "") + "/" + $("#patientMobile").val() + "/" + $("#patientName").val() + "\"><div class=\"col-xs-7\"><div class=\"row\"><span class=\"head-pic-sm\"><img style=\"border-radius:5px;\" src=\"../images/head-sm.jpg\"></span><span class=\"margin-w10\"> " + $("#patientName").val() + "</span></div></div><div class=\"col-xs-5 text-right\" style=\"line-height: 2.6;\"><img class=\"margin-w5 initial\" src=\"../images/icon17.png\">75岁</div></li>";
+                                $("#patientList").html(strhtml);
+
+                                alert("添加成功！");
+                                $("#add_patient_data").modal('hide');
+                                window.location.href = '/F8YLProject/ProjectDetail?id=' + $("#projectId").val();
+                                return true;
+                            }
+                            else {
+                                alert("接口返回信息：" + retData.message);
+                            }
+                        },
+                        error: function (e) {
+
+                        }
+
+                    })
+                }
+                else {
+
+                    $.ajax({
+                        url: "/F8YLProject/saveInforamtion?username=" + patientName + "&email=" + "" + "&avatar=" + "" + "&sex=" + sex + "&ethnic=" + ethnics + "&height=" + height + "&weight=" + weight + "&address=" + address + "&doctorid=" + doctorid + "&userid=" + userid + "&mobile=" + $("#patientMobile").val() + "&telphone=" + tel + "&num_il=" + num_il,
+                        type: "GET",
+                        dataType: "json",
+                        success: function (retData) {
+                            if (retData.code == 0) {
+                                alert("修改成功！");
+                                $("#add_patient_data").modal('hide');
+                                if (retData.data.avatar!= "") {
+                                    $("#paitentimg").attr("src", "http://139.196.192.14" + retData.data.avatar);
+                                }
+                            }
+                            else {
+                                alert(retData.message);
+                            }
+                        },
+                        error: function (e) {
+
+                        }
+                    })
+
+                }
+
+            })
+
+            //修改密码
+            //$("#updatepassword").click(function () {
+
+            //    var oldpassword = $("#oldpassword").val();
+            //    var newpassword = $("#newpassword").val();
+            //    var againpassword = $("#againpassword").val();
+
+            //    if ($.trim(oldpassword) == "") {
+            //        alert("请输入当前密码！");
+            //        return false;
+            //    }
+            //    if ($.trim(newpassword) == "") {
+            //        alert("请输入新密码！");
+            //        return false
+            //    }
+            //    if ($.trim(againpassword) == "") {
+            //        alert("请再次输入新密码！");
+            //        return false
+            //    }
+            //    if ($.trim(againpassword) != $.trim(newpassword)) {
+            //        alert("两次输入密码不一致！");
+            //        return false
+            //    }
+
+            //    //修改密码
+            //    $.ajax({
+            //        url: "/F8YLProject/updatePassword?pass_old=" + oldpassword + "&pass_new1=" + newpassword + "&pass_new2=" + againpassword,
+            //        type: "GET",
+            //        dataType: "json",
+            //        success: function (retData) {
+            //            if (retData.code == 0) {
+            //                $("#change_password").css("display", "none");
+            //                alert("修改成功！");
+            //            }
+            //            else {
+            //                alert(retData.message);
+            //            }
+            //        },
+            //        error: function (e) {
+
+            //        }
+
+            //    })
+            //})
+
+            //获取项目归档列表
+            $("#fileArchive").click(function () {
+                $.ajax({
+                    url: "/F8YLProject/getprojectList?projectId=" + $("#projectId").val() + "&hospitalId=" + $("#hospitalnum").val() + "&userId=" + $("#projectidname").attr("name"),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            var strhtml = $("#filelist").html();
+
+                            $.each(retData.data.data, function (i, item) {
+                                strhtml += "<span class=\"col-xs-9  margin-t10\">" + item.name + "</span><a href=\"#\" class=\"col-xs-3 text-right  margin-t10\" name=\"" + item.id + "\">激活项目</a>"
+                            })
+                            $("#filelist").html(strhtml);
+                        }
+                        else {
+                            var strhtml = $("#filelist").html();
+                            strhtml = "<span class=\"col-xs-9  margin-t10\">" + "暂无找到要激活的项目" + "</span>"
+                            $("#filelist").html(strhtml);
+
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e.message);
+                    }
+
+                })
+            })
+
+            //激活项目
+            $(document).on("click", "#filelist a", function () {
+                $.ajax({
+                    url: "/F8YLProject/projectInvoke?projectId=" + $(this).attr("name"),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            alert(retData.data);
+                            window.location.href = '/F8YLProject/ProjectList';
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+
+                })
+            })
+
+            //退出
+            $(".btn_exit").click(function () {
+                $.ajax({
+                    url: "/F8YLProject/loginout",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            alert(retData.data);
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+
+                })
+            })
+
+            //createproject创建项目
+            $("#createproject").click(function () {
+                var projectName = $('#detailaddprojectname').val();
+
+                var datajson = {
+                    "projectName": projectName
+                };
+
+                $.ajax({
+                    url: "/F8YLProject/CreateProject",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            window.location.href = '/F8YLProject/ProjectDetail?id=' + retData.data.id;
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+            })
+
+            //上传个人资料头像,personalData
+            $("#uploadpic").click(function () {
+                var option = {
+                    type: 'post',
+                    url: 'http://139.196.192.14/upload/web?token=' + $("#hdnToken").val(),
+                    beforeSubmit: function () {
+
+                    },
+                    success: function (result) {
+                        if ($.parseJSON(result).code == 0) {
+                            sessionStorage.setItem("FileUploadedResult", result);
+                            alert("上传成功");
+
+                            $("#header-pic").attr("src", "http://139.196.192.14" + $.parseJSON(result).data);
+
+                        } else {
+                            alert($.parseJSON(result).message);
+                        }
+
+                    },
+                    error: function (result) {
+                        debugger;
+                    }
+                };
+
+                $('#formFilePic').ajaxSubmit(option);
+            })
+
+            //上传患者头像
+            $("#uploadpatentpic").click(function () {
+                var option = {
+                    type: 'post',
+                    url: 'http://139.196.192.14/upload/web?token=' + $("#hdnToken").val(),
+                    beforeSubmit: function () {
+
+                    },
+                    success: function (result) {
+                        if ($.parseJSON(result).code == 0) {
+                            sessionStorage.setItem("FileUploadedResult", result);
+                            alert("上传成功");
+                        } else {
+                            alert($.parseJSON(result).message);
+                        }
+
+                    },
+                    error: function (result) {
+                        debugger;
+                    }
+                };
+
+                $('#formFilepatenPic').ajaxSubmit(option);
+            })
+
+
+
+            //跳转到F8YLMessage
+            $(".windowsSkip").click(function () {
+
+                //window.location.href = "/F8YLMessage/MessageIndex?pageType=2&projectId=" + $("#projectId").val() + "&hospitalId=" + $("#hospitalnum").val() + "&patientId=" + $("#patientNames").attr("name");
+                window.open("/F8YLMessage/MessageIndex?pageType=1&projectId=" + $("#projectId").val() + "&hospitalId=" + $("#hospitalnum").val() + "&patientId=" + $("#patientNames").attr("name"));
+            })
+
+        })
+        function downloadTemplate() {
+            //window.open("http://139.196.192.14/download?file=dHBsLXVzZXItaW1wb3J0Lnhscw%3D%3D");
+            window.open("http://139.196.192.14/download?file=dHBsLXBhdGllbnQtaW1wb3J0Lnhscw%3D%3D&name=5qih5p2%2FLeeXheS6uuWvvOWFpS54bHM%3D");
+        }
+
+        function uploadFile() {
+            var option = {
+                type: 'post',
+                url: 'http://139.196.192.14/upload/web?token=' + $("#hdnToken").val(),
+                beforeSubmit: function () {
+
+                },
+                success: function (result) {
+                    if ($.parseJSON(result).code == 0) {
+                        sessionStorage.setItem("FileUploadedResult", result);
+                        alert("上传成功");
+                    } else {
+                        alert($.parseJSON(result).message);
+                    }
+
+                },
+                error: function (result) {
+                    debugger;
+                }
+            };
+
+            $('#formFile').ajaxSubmit(option);
+        }
+
+        //function importDataFromFile() {
+        //    var fileName = "";
+        //    if (sessionStorage.getItem("FileUploadedResult")) {
+        //        var uploadedResult = $.parseJSON(sessionStorage.getItem("FileUploadedResult"));
+        //        fileName = uploadedResult.data;
+        //    }
+        //    if (!fileName) {
+        //        return;
+        //    }
+        //    $.ajax({
+        //        url: 'http://139.196.192.14/ucenter/user/import',
+        //        type: 'POST',
+        //        dataType: 'json',
+        //        data: JSON.stringify({ token: $("#hdnToken").val(), filexls: fileName }),
+        //        success: function (result) {
+        //            debugger;
+        //        },
+        //        error: function (result) {
+        //            debugger;
+        //        }
+        //    });
+        //}
+
+
+        //显示选择文件的路径
+        function ChooseFileDone(path) {
+            //alert(path);
+            $("#textfield").val(path);
+        }
+        //上传修改后的Excel模板
+        $(function () {
+            $("#uploadusertemp").click(function () {
+                var file = $("#textfile").val();
+                if (file == "") {
+                    alert("请先选择目标文件！")
+                    return;
+                }
+                var option = {
+                    type: 'post',
+                    url: 'http://139.196.192.14/upload/web?token=' + $("#hdnToken").val(),
+                    beforeSubmit: function () {
+
+                    },
+                    success: function (result) {
+                        //alert(result);
+
+                        if ($.parseJSON(result).code == 0) {
+                            sessionStorage.setItem("FileUploadedResult", result);
+                            importDataFromFile();
+                            //alert("上传成功");
+                        } else {
+                            alert($.parseJSON(result).message);
+                        }
+
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+                };
+
+                $('#formFileUserTemp').ajaxSubmit(option);
+            })
+        });
+
+
+        //批量导入模板信息
+        function importDataFromFile() {
+            var fileName = "";
+            if (sessionStorage.getItem("FileUploadedResult")) {
+                var uploadedResult = $.parseJSON(sessionStorage.getItem("FileUploadedResult"));
+                fileName = uploadedResult.data;
+                //alert(fileName);
+            }
+            if (!fileName) {
+                return;
+            }
+            var datajson = {
+                "filexls": fileName,
+            };
+
+            $.ajax({
+                url: "/F8YLManage/ImportUser",
+                contentType: "application/json; charset=utf-8",
+                type: "POST",
+                data: JSON.stringify(datajson),
+                dataType: "json",
+                success: function (retData) {
+                    $("#textfield").val("");
+                    $("#textfile").val("");
+                    var msg = "";
+                    $.each(retData.data.importinfos, function (i, t) {
+                        if (t.code != 0) {
+                            msg += "第" + (i + 1) + "行:" + t.message + "\r\n";
+                        }
+                    });
+
+                    if (msg == "") {
+                        alert("批量导入成功。");
+                    }
+                    else {
+                        alert(msg);
+                    }
+                },
+                error: function (e) {
+                    alert(e);
+                }
+            });
+        }
+
+
+
+
+        function cancelImportData() {
+            sessionStorage.removeItem("FileUploadedResult");
+        }
+
+        //权限控制
+        $(function () {
+            var userRole = "@userProfileInfo.role";
+
+            if (userRole == "-10") {
+                //病人
+                $(".tab_one span:eq(1)").click();
+                $(".tab_one").hide();
+
+                //$("div.tab_Patient div:eq(1) div a:eq(1)").hide();
+                //$("div.tab_Patient div:eq(1) div a:eq(1)").next("br").remove();
+                //$("div.tab_Patient div:eq(1) div a:eq(2)").hide();
+                //$("div.tab_Patient div:eq(1) div a:eq(2)").next("br").remove();
+            }
+
+        })
+
+    </script>
+</body>
+</html>

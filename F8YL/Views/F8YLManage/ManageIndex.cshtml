@@ -1,0 +1,2191 @@
+﻿@{
+    Layout = null;
+}
+@using F8YL.Model;
+@using F8YL.BLL;
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta content="yes" name="apple-mobile-web-app-capable" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
+    <title>医患平台--管理</title>
+    <!-- bootstrap -->
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-extend.min.css">
+    <!-- 页面样式 -->
+    <link rel="stylesheet" type="text/css" href="../css/base.css">
+    <link rel="stylesheet" type="text/css" href="../css/layout.css">
+    <link href="../css/style.css" rel="stylesheet" />
+    <!-- 上传样式 -->
+    <link href="../css/webuploader.css" rel="stylesheet" />
+    <!-- jQuery -->
+    <script src="../js/jquery-1.11.3.min.js"></script>
+    <script src="../js/jquery.placeholder.min.js"></script>
+    <!-- bootstrap -->
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="~/Scripts/UCenter/UCenter.js"></script>
+    <script src="~/js/uploadfile.js"></script>
+    <script src="~/js/jquery-form.js"></script>
+
+    @{
+
+        UserProfileInfo userProfileInfo = (UserProfileInfo)ViewBag.UserFile;
+        userProfileInfo.avatar = "http://139.196.192.14" + userProfileInfo.avatar;
+        HospitalSearchResponse hsr = (HospitalSearchResponse)ViewBag.HospitalList;
+        List<TplDetailResponse> listTplDetailResponse = new List<TplDetailResponse>();
+        string strHSR = JsonHelper.SerializeObject(hsr);
+    //string LoginUserRole = (string)ViewBag.LoginUserRole;
+
+    }
+    <script type="text/javascript">
+        var json = @Html.Raw(strHSR);
+        var list = json.data.data;
+        var currentHospitalId=list[0].id;
+        var currentUserId="";
+        var hospitaluserlist="";//实时医院用户列表
+        //var isPhone = /^([0-9]{3,4}-)?[0-9]{7,8}$/;
+        var regMobile=/^(13[0123456789][0-9]{8}|15[012356789][0-9]{8}|18[02356789][0-9]{8}|147[0-9]{8}|1349[0-9]{7})$/;
+        var regIdCard = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
+        var regPhone = /^0?1[3|4|5|8][0-9]\d{8}$/;
+        var regEmail=/^[a-zA-Z0-9_-]+@@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
+        //add by jack
+        var templateData;//模板分类返回数据
+
+        function GetRoleName(roleid)
+        {
+            var role="";
+            if (roleid=='-10') {
+                role='病人'
+            }
+            else if(roleid=='10') {
+                role='医生'
+            }
+            else if(roleid=='20') {
+                role='PI'
+            }
+            else if(roleid=='80') {
+                role='医院管理员'
+            }
+            else if(roleid=='90') {
+                role='后台管理员'
+            }
+            else {
+                role='其它'
+            }
+            return role;
+        }
+
+        //注册新医院
+        function createAjaxHospital() {
+            var title = $('#hospital_title').val();
+            var idcard = $('#hospital_idcard').val();
+            var contact = $('#hospital_contact').val();
+            var mobile = $('#hospital_mobile').val();
+
+            var address = $('#hospital_address').val();
+            var telphone = $('#hospital_telphone').val();
+            var deptname = $('#hospital_deptname').val();
+
+
+
+            if (!title||!idcard||!contact||!mobile) {
+                alert('请填写完成资料！');
+                return;
+            }
+
+            if (!regPhone.test(mobile)) {
+                alert('请输入正确的手机号码！');
+                return;
+            }
+            if (!regIdCard.test(idcard)) {
+                alert('请输入正确的身份证号码！');
+                return;
+            }
+
+            var datajson = {
+                "title": title,
+                "contact": contact,
+                "idcard": idcard,
+                "mobile": mobile,
+
+                "address": address,
+                "telphone": telphone,
+                "deptname": deptname,
+            };
+
+            $.ajax({
+                url: "/F8YLManage/RegisterHospital",
+                contentType: "application/json; charset=utf-8",
+                type: "POST",
+                data: JSON.stringify(datajson),
+                dataType: "json",
+                success: function (retData) {
+                    if (retData.code == 0) {
+                        //清空记录
+                        $('#hospital_title').val("");
+                        $('#hospital_idcard').val("");
+                        $('#hospital_contact').val("");
+                        $('#hospital_mobile').val("");
+                        $('#hospital_address').val("");
+                        $('#hospital_telphone').val("");
+                        $('#hospital_deptname').val("");
+                        alert("注册医院成功。");
+                        $("#add_hospital").modal("hide");
+                        var hospitalid=retData.data.hospital.id;
+                        var addHtml="<button class='form-control text-left margin-h10 c-hospitals-name' data-toggle='modal' data-target='#edit_hospital' id="+hospitalid+">"+title+"</button>"
+                        //alert(addHtml);
+                        $("#hostpital-list").append(addHtml);
+                        //$("#hostpital-list").on("click","button",function(){
+                        //    $('#title').val(retData.data.hospital.title);
+                        //    $('#address').val(retData.data.hospital.address);
+                        //    $('#contact').val(retData.data.hospital.contact);
+                        //    $('#mobile').val(retData.data.hospital.mobile);
+                        //});
+
+                        list[list.length]=retData.data.hospital;
+
+                        //window.location.href = '/F8YLManage/ManageIndex';
+                    }
+                    else {
+                        alert(retData.message);
+                    }
+                },
+                error: function (e) {
+                    alert(e);
+                }
+
+            })
+
+        };
+
+        //移除医院
+        $(function(){
+            //$(".remove-hospital-msg").attr("disabled","disabled");
+            $(".remove-hospital-msg").click(function(){
+                //alert('当前医院ID:'+currentHospitalId);
+                //showWarningMsg('当前医院ID:'+currentHospitalId);
+
+                var datajson = {
+                    "id":currentHospitalId,
+                };
+
+                $.ajax({
+                    url: "/F8YLManage/DisableHospital",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            alert("移除医院成功。");
+                            //UpdateHospitalDetail(retData.data.id);
+                            //从li中移除对应医院
+                            $(".tab5").css("display", "none");
+                            $("#hostpital-list>button[id="+currentHospitalId+"]").remove();
+                            $("#edit_hospital").modal("hide");
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+                });
+            })
+        });
+
+        //修改医院
+        $(function(){
+            $(".edit-hospital").click(function(){
+                //alert('当前医院ID:'+currentHospitalId);
+                var title = $('#title').val();
+                var address = $('#address').val();
+                var contact = $('#contact').val();
+                var mobile = $('#mobile').val();
+                var telphone = $('#hosp-telphone').val();
+                var deptname = $('#deptname').val();
+
+                if (!title&&!contact) {
+                    alert('请填写完成资料！');
+                    return;
+                }
+                //else if(!regMobile.test(mobile)){
+                //    alert('请输入正确的手机号码！');
+                //    return;
+                //}
+
+                var datajson = {
+                    "id":currentHospitalId,
+                    "title": title,
+                    "contact": contact,
+                    "address": address,
+                    "mobile": mobile,
+                    "telphone": telphone,
+                    "deptname": deptname,
+
+                };
+
+                $.ajax({
+                    url: "/F8YLManage/EditHospital",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            alert("修改医院成功。");
+                            $("#edit_hospital").modal("hide");
+                            UpdateHospitalDetail(retData.data.id);
+                            $(".tab5").css("display", "none");
+
+                            //window.location.href = '/F8YLManage/ManageIndex';
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+            })
+        });
+
+        //用户管理
+        $(function()
+        {
+            $("#user-manage").click(function(){
+                var datajson = {
+                };
+
+                $.ajax({
+                    url: "/F8YLManage/HostpitalSearch",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            var strhtml="";
+                            //alert("获取医院列表成功。");
+                            if (retData.data.data!=null) {
+                                $.each(retData.data.data,function(d,item){
+                                    if (d==0) {
+                                        $("#user-hospitalname").val(item.title);
+                                    }
+
+                                    strhtml+="<li id="+item.id+"><span>"+item.title+"</span></li>";
+
+                                })
+                                $('#HospitalUser').html(strhtml);
+                            }
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+
+            })
+        })
+
+        //新增用户
+        function AddAjaxUser()
+        {
+            var role= $("input[name='optionsRadiosinline']:checked").val();
+            var idcard = $('#user-idcard').val();
+            var username = $('#user-name').val();
+            var email = $('#user-email').val();
+            var mobile = $('#user-mobile').val();
+
+            var deptname = $('#user-deptname').val();
+            var duty = $('#user-duty').val();
+            var tel = $('#user-tel').val();
+            var title = $('#user-hospitalname').val();
+
+            //alert("角色："+role);
+            //alert('当前医院ID:'+currentHospitalId);
+
+            if (email) {//邮箱不必填
+                if(!regEmail.test(email))
+                {
+                    alert('请输入正确的邮箱格式！');
+                    return;
+                }
+            }
+
+            if (!username||!idcard||!mobile) {
+                alert('请填写完成资料！');
+            }
+            else if(!regPhone.test(mobile)){
+                alert('请输入正确的手机号码！');
+            }
+            else if(!regIdCard.test(idcard)){
+                alert('请输入正确的身份证号码！');
+            }
+
+            else{
+
+                //根据身份证计算年龄
+                var date = new Date();
+                var year = date.getFullYear();
+                var birthday_year = parseInt(idcard.substr(6,4));
+                var userage= year - birthday_year;
+                var datajson = {
+                    "id":currentHospitalId,
+                    "role": role,
+                    "username": username,
+                    "idcard": idcard,
+                    "mobile": mobile,
+                    "email": email,
+                    "deptname": deptname,
+                    "duty": duty,
+                    "tel": tel,
+                };
+
+                $.ajax({
+                    url: "/F8YLManage/AddUser",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            //清空
+                            $('#user-idcard').val("");
+                            $('#user-name').val("");
+                            $('#user-email').val("");
+                            $('#user-mobile').val("");
+
+                            $('#user-deptname').val("");
+                            $('#user-duty').val("");
+                            $('#user-tel').val("");
+                            $('#user-hospitalname').val("");
+
+                            alert("新增用户成功。");
+                            $('#adduser').modal('hide');
+                            hospitaluserlist[hospitaluserlist.length]=retData.data;//新增用户是往用户列表里增加一条记录
+                            var newuserrole=GetRoleName(retData.data.role);
+                            var newuser="<button class='form-control text-left pad-h5 pad-w10 margin-h10 move-user' type='button' id='"+retData.data.id+"'><span class='badge pad-w5 pad-h5 color333'>"+newuserrole+"</span><span>&nbsp;&nbsp;"+retData.data.username+"</span></button>";
+                            $('#HospitalUserList').append(newuser);
+                            //window.location.href = '/F8YLManage/ManageIndex';
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+            }
+        };
+
+        //获取医院明细信息
+        function HospitalDetail(id) {
+            $(list).each(function(){
+                var o = this;
+                //alert(o.id);
+                currentHospitalId=id;
+                if(o.id == id)
+                {
+                    $('#title').val(o.title);
+                    $('#address').val(o.address);
+                    $('#contact').val(o.contact);
+                    $('#mobile').val(o.mobile);
+                    $('#hosp-telphone').val(o.telphone);
+                    $('#deptname').val(o.deptname);
+                }
+            })
+        };
+
+        //修改医院信息后更新list
+        function UpdateHospitalDetail(id) {
+            $(list).each(function(){
+
+                if(this.id == id)
+                {
+                    //debugger;
+                    this.title=$('#title').val();
+                    this.address=$('#address').val();
+                    this.contact= $('#contact').val();
+                    this.mobile=$('#mobile').val();
+                    this.telphone=$('#hosp-telphone').val();
+                    this.deptname=$('#deptname').val();
+
+                }
+            })
+            //alert(JSON.stringify(list));
+        };
+
+        //修改用户信息后更新list
+        function UpdateUserlDetail(id) {
+            $(hospitaluserlist).each(function(){
+
+                if(this.id == id)
+                {
+
+                    this.username=  $("#user-name-move").val();//姓名
+                    this.email=  $("#user-email-move").val();//邮箱
+                    this.deptname=   $("#user-deptname-move").val();//科室
+                    this.duty=  $("#user-duty-move").val();//职称
+                    this.tel=   $("#user-tel-move").val();//电话
+
+                }
+            })
+            //alert(JSON.stringify(list));
+        };
+
+        //获取医院用户列表
+        $(document).on("click","#HospitalUser li",function(){
+
+            $('#HospitalUserList>button').remove();//清除别的医院的列表
+            hospitaluserlist="";
+            //var hospitalId=$("#HospitalUser li span").text();
+            var hospitalId=$(this).attr("id");
+            var hospitalName=$(this).children("span").text();
+            $("#user-hospitalname").val(hospitalName);
+            currentHospitalId=hospitalId;
+
+
+            $("#HospitalUser li").removeClass("active");//清除列表中原先选中的医院
+            $(this).addClass("active");//选中医院
+            var datajson = {
+                "hospitalId": hospitalId
+            };
+            var strhtml="";
+            $.ajax({
+                url: "/F8YLManage/GetUserProfileByHospitalId",
+                contentType: "application/json; charset=utf-8",
+                type: "POST",
+                data: JSON.stringify(datajson),
+                dataType: "json",
+                success: function (retData) {
+                    //alert(JSON.stringify(retData));
+                    if (retData.code == 0&&retData.data!=null) {
+                        hospitaluserlist=retData.data.data;
+                        //alert(JSON.stringify(hospitaluserlist));
+                        var role;
+                        //alert(JSON.stringify(retData[i].data));
+                        if (retData.data!=null) {
+                            $.each(retData.data.data,function(d,item){
+                                //alert(item.role);
+                                role=GetRoleName(item.role);
+
+                                strhtml+="<button class='form-control text-left pad-h5 pad-w10 margin-h10 move-user' type='button' id='"+item.id+"'><span class='badge pad-w5 pad-h5 color333'>"+role+"</span><span>&nbsp;&nbsp;"+item.username+"</span></button>";
+
+                            })
+                            $('#HospitalUserList').html(strhtml);
+                            //alert(strhtml);
+                        }
+                    }
+                    else {
+                        alert(retData.message);
+                    }
+                },
+                error: function (e) {
+                    alert(e);
+                }
+            })
+        })
+
+        //移除用户
+        $(function(){
+            $("#user-moved").click(function(){
+
+                var datajson = {
+                    "id":currentUserId,
+                };
+
+                $.ajax({
+                    url: "/F8YLManage/UserStatusDisable",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+
+                            alert("移除用户成功。");
+                            //从li中移除对应用户
+                            //$(".tab7-3").css("display", "none");
+                            $('#modle7-3').modal('hide');
+                            $("#HospitalUserList>button[id="+currentUserId+"]").remove();
+
+                            //window.location.href = '/F8YLManage/ManageIndex';
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+            })
+        });
+
+        //修改用户
+        $(function(){
+            $("#user-update").click(function(){
+                //alert("修改用户:"+currentUserId);
+
+                var name=$("#user-name-move").val();//姓名
+                var email=  $("#user-email-move").val();//邮箱
+                var deptname=   $("#user-deptname-move").val();//科室
+                var duty=  $("#user-duty-move").val();//职称
+                var tel=   $("#user-tel-move").val();//电话
+
+
+                var datajson = {
+                    "userid":currentUserId,
+                    "username": name,
+                    "deptname": deptname,
+                    "duty": duty,
+                    "tel": tel,
+                    "email": email,
+
+                };
+
+                $.ajax({
+                    url: "/F8YLManage/UpdateUser",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            alert("修改用户成功。");
+                            UpdateUserlDetail(retData.data.id);
+                            //$(".tab5").css("display", "none");
+
+                            //window.location.href = '/F8YLManage/ManageIndex';
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+
+
+
+            })
+        });
+
+        //模板分类
+        $(function(){
+            //模板分类
+            $("#tpl-detail").click(function(){
+                $(".template-loading").show();
+                $.ajax({
+                    url: "/F8YLManage/GetTplDetai",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    dataType: "json",
+                    success: function (retData) {
+
+                        templateData = retData;
+
+                        var htmlTpl = "";
+                        $.each(retData, function(i, t){
+                            var tpl = t.data;
+
+                            //alert(tpl.tpl_detail[0].term.editbypat);
+                            var isEditbypat = "";
+                            if(tpl.tpl_detail[0].editbypat == "1")
+                                isEditbypat = " checked='checked' ";
+
+                            //alert( tpl.period + " " + tpl.freqs); <input type='hidden' value='" + tpl.period + "' /><input type='hidden' value='" + tpl.freqs + "' />
+                            htmlTpl += "<tr>";
+                            htmlTpl += "  <td>" + tpl.name + "<input type='hidden' id='hid_" + tpl.id + "' value='" + tpl.id + "' /></td>";
+                            //htmlTpl += "  <td><a href='#' class='btn_editTimes'>编辑</a></td>";
+
+                            htmlTpl += "  <td>" + tpl.sharp[tpl.tpl_detail[0].sharpid].name + "</td>";
+                            htmlTpl += "  <td>" + (tpl.sharp[tpl.tpl_detail[0].sharpid2]!=null?tpl.sharp[tpl.tpl_detail[0].sharpid2].name:"") + "</td>";
+                            htmlTpl += "  <td>" + tpl.tpl_detail[0].term.name + "</td>";
+                            htmlTpl += "  <td><input type='hidden' id='hidtpldetail_" + tpl.tpl_detail[0].id + "' value='" + tpl.tpl_detail[0].id + "' /><input type='checkbox' class='editbypat' " + isEditbypat + " style='margin-left: 10px;margin-right: 10px' />是</td>";
+                            htmlTpl += "</tr>";
+
+                            for(var j=1; j<tpl.tpl_detail.length;j++){
+                                var tdtl = tpl.tpl_detail[j];
+
+                                isEditbypat = "";
+                                if(tdtl.editbypat == "1")
+                                    isEditbypat = " checked='checked' ";
+
+                                if(tdtl.sharpid != tpl.tpl_detail[j-1].sharpid){   //当前一级模板和前一个一级模板不同
+                                    htmlTpl += "<tr>";
+                                    //htmlTpl += "  <td></td><td></td><td></td>";
+                                    //htmlTpl += "  <td></td><td></td>";//周期频次合成一列
+                                    htmlTpl += "  <td></td>";//周期频次不要了
+                                    htmlTpl += "  <td>" + tpl.sharp[tdtl.sharpid].name + "</td>";
+                                    htmlTpl += "  <td>" + (tpl.sharp[tdtl.sharpid2]!=null?tpl.sharp[tdtl.sharpid2].name:"") + "</td>";
+                                    htmlTpl += "  <td>" + tdtl.term.name + "</td>";
+                                    htmlTpl += "  <td><input type='hidden' id='hidtpldetail_" + tdtl.id + "' value='" + tdtl.id + "' /><input type='checkbox' class='editbypat' " + isEditbypat + " style='margin-left: 10px;margin-right: 10px' />是</td>";
+                                    htmlTpl += "</tr>";
+                                }else if(tdtl.sharpid == tpl.tpl_detail[j-1].sharpid && tdtl.sharpid2 == tpl.tpl_detail[j-1].sharpid2){   //当前一级模板和二级模板和前一个都相同
+                                    htmlTpl += "<tr>";
+                                    //htmlTpl += "  <td></td><td></td><td></td><td></td><td></td>";//周期频次合成一列
+                                    //htmlTpl += "  <td></td><td></td><td></td><td></td>";//周期频次不要了
+                                    htmlTpl += "  <td></td><td></td><td></td>";
+                                    htmlTpl += "  <td>" + tdtl.term.name + "</td>";
+                                    htmlTpl += "  <td><input type='hidden' id='hidtpldetail_" + tdtl.id + "' value='" + tdtl.id + "' /><input type='checkbox' class='editbypat' " + isEditbypat + " style='margin-left: 10px;margin-right: 10px' />是</td>";
+                                    htmlTpl += "</tr>";
+                                }else{   //当前一级模板和前一个一级模板相同
+                                    htmlTpl += "<tr>";
+                                    //htmlTpl += "  <td></td><td></td><td></td><td></td>";
+                                    //htmlTpl += "  <td></td><td></td><td></td>";//周期频次合成一列
+                                    htmlTpl += "  <td></td><td></td>";//周期频次不要了
+                                    htmlTpl += "  <td>" + (tpl.sharp[tdtl.sharpid2]!=null?tpl.sharp[tdtl.sharpid2].name:"") + "</td>";
+                                    htmlTpl += "  <td>" + tdtl.term.name + "</td>";
+                                    htmlTpl += "  <td><input type='hidden' id='hidtpldetail_" + tdtl.id + "' value='" + tdtl.id + "' /><input type='checkbox' class='editbypat' " + isEditbypat + " style='margin-left: 10px;margin-right: 10px' />是</td>";
+                                    htmlTpl += "</tr>";
+                                }
+                                //$('#tpl-detailbody').append(htmlTpl);
+                                //htmlTpl="";
+                            }
+
+                        });
+
+                        //alert(htmlTpl);
+                        $('#tpl-detailbody').html(htmlTpl);
+                        $(".template-loading").hide();
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+
+            })
+
+            //病人是否可编辑checkbox点击事件
+            $(document).on("click",".editbypat",function(){
+                var editbypat = $(this).is(':checked')?"1":"0";
+
+                var tpldetailid = $(this).prev(":hidden").val();
+                $.each(templateData, function(i,t){
+                    var tpl = t.data;
+
+                    $.each(tpl.tpl_detail, function(i,tdtl){
+                        if(tdtl.id==tpldetailid){
+                            //alert("jackding");
+                            tdtl.editbypat =editbypat;
+                            //alert(tdtl.term.editbypat );
+                            return false;
+                        }
+                    })
+                })
+            })
+
+            //保存周期和频次
+            $("#savePeriodFreqs, #savecustomperifreq").click(function(){
+
+                var period = "";
+                var freqs = "";
+                if($(this).attr("id") == "savePeriodFreqs"){
+                    period = $("#tpl-period").val();
+                    freqs = $("#tpl-freqs").val();
+                }else{
+                    period = $.trim($("#tpl-cus-period").val());
+                    if(period == ""){
+                        alert("请输入周期！");
+                        return;
+                    }
+                    if(!/^[0-9]*[1-9][0-9]*$/.test(period)){
+                        alert("输入不合法，请输入正整数！");
+                        return;
+                    }
+
+                    freqs = $.trim($("#tpl-cus-freqs").val());
+                    if(freqs == ""){
+                        alert("请输入频次！");
+                        return;
+                    }
+                    if(!/^[0-9]*[1-9][0-9]*$/.test(freqs)){
+                        alert("输入不合法，请输入正整数！");
+                        return;
+                    }
+                }
+
+
+                var curEditTpl = null;
+                var tplid = $("#tplid").val();
+                $.each(templateData, function(i,t){
+                    if(t.data.id == tplid){
+                        curEditTpl = t;
+                        return false;
+                    }
+                })
+
+                if(curEditTpl == null) return;
+
+                curEditTpl.data.period = period;
+                curEditTpl.data.freqs = freqs;
+
+                if($(this).attr("id") == "savePeriodFreqs"){
+                    clone('tab10-3');
+                }else{
+                    clone('tab10-4');
+                }
+
+            })
+
+            //保存模板分类
+            $("#tpl-change").click(function(){
+                //alert(JSON.stringify(templateData));
+                var datajson = {
+                    "strListTplDetail": JSON.stringify(templateData),
+                };
+                $.ajax({
+                    url: "/F8YLManage/TplChange",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    dataType: "json",//返回值类型,没有就是返回void
+                    data: JSON.stringify(datajson),
+                    success: function (retData) {
+                        if (retData.code==0) {
+                            alert("保存成功。");
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+            });
+
+        })
+
+        //下载模板Excel
+        $(function(){
+            $(".template-user").click(function(){
+                var name=$(this).attr("id");
+                if (name=="tplofuser-80") {//医院管理员
+                    window.open("http://139.196.192.14/download?file=dHBsLXVzZXItaW1wb3J0Lnhscw%3D%3D&name=5qih5p2%2FLeeUqOaIt%2BWvvOWFpS54bHM%3D");
+                }
+                else if (name=="tplofuser-20") {//PI
+                    window.open("http://139.196.192.14/download?file=dHBsLXBpLWltcG9ydC54bHM%3D&name=5qih5p2%2FLVBJ5a%2B85YWlLnhscw%3D%3D");
+                }
+                else if (name=="tplofuser-10") {//医生
+                    window.open("http://139.196.192.14/download?file=dHBsLWRvY3Rvci1pbXBvcnQueGxz&name=5qih5p2%2FLeWMu%2BeUn%2BWvvOWFpS54bHM%3D");
+                }
+                else if (name=="tplofuser--10") {//病人
+                    window.open("http://139.196.192.14/download?file=dHBsLXBhdGllbnQtaW1wb3J0Lnhscw%3D%3D&name=5qih5p2%2FLeeXheS6uuWvvOWFpS54bHM%3D");
+                }
+                else if (name=="tplofhospital") {
+                    window.open("http://139.196.192.14/download?file=dHBsLXVzZXItaW1wb3J0Lnhscw%3D%3D");
+                }
+                return false;//不刷新页面
+            })
+        });
+
+        //上传用户头像
+        $(function(){
+            $("#uploaduserpic").click(function () {
+                var option = {
+                    type: 'post',
+                    url: 'http://139.196.192.14/upload/web?token=' + $("#hdnToken").val(),
+                    beforeSubmit: function () {
+
+                    },
+                    success: function (result) {
+                        //alert(result);
+
+                        if ($.parseJSON(result).code == 0) {
+                            sessionStorage.setItem("PicUploadedResult", result);
+                            alert("上传成功");
+                            $('#uploaduserpic').css("display","none");
+                            $("#header-pic").attr("src","http://139.196.192.14"+$.parseJSON(result).data);
+                            $(".head-pic>img").attr("src","http://139.196.192.14"+$.parseJSON(result).data);
+
+                        } else {
+                            alert($.parseJSON(result).message);
+                        }
+
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+                };
+
+                $('#formFileUserPic').ajaxSubmit(option);
+            })
+        });
+
+        //显示选择文件的路径
+        function ChooseFileDone(path)
+        {
+            //alert(path);
+            $("#textfield").val(path);
+        }
+        //上传修改后的Excel模板
+        $(function(){
+            $("#uploadusertemp").click(function () {
+                var file = $("#textfile").val();
+                if (file=="") {
+                    alert("请先选择目标文件！")
+                    return;
+                }
+                var option = {
+                    type: 'post',
+                    url: 'http://139.196.192.14/upload/web?token=' + $("#hdnToken").val(),
+                    beforeSubmit: function () {
+
+                    },
+                    success: function (result) {
+                        //alert(result);
+
+                        if ($.parseJSON(result).code == 0) {
+                            sessionStorage.setItem("FileUploadedResult", result);
+                            importDataFromFile();
+                            //alert("上传成功");
+                        } else {
+                            alert($.parseJSON(result).message);
+                        }
+
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+                };
+
+                $('#formFileUserTemp').ajaxSubmit(option);
+            })
+        });
+
+
+        //批量导入模板信息
+        function importDataFromFile() {
+            var fileName = "";
+            if (sessionStorage.getItem("FileUploadedResult")) {
+                var uploadedResult = $.parseJSON(sessionStorage.getItem("FileUploadedResult"));
+                fileName = uploadedResult.data;
+                //alert(fileName);
+            }
+            if (!fileName) {
+                return;
+            }
+            var datajson = {
+                "filexls":fileName,
+            };
+
+            $.ajax({
+                url: "/F8YLManage/ImportUser",
+                contentType: "application/json; charset=utf-8",
+                type: "POST",
+                data: JSON.stringify(datajson),
+                dataType: "json",
+                success: function (retData) {
+                    $("#textfield").val("");
+                    $("#textfile").val("");
+                    var msg="";
+                    $.each(retData.data.importinfos, function(i, t){
+                        if (t.code!=0) {
+                            msg+="第"+(i+1)+"行:"+t.message+"\r\n";
+                        }
+                    });
+
+                    if (msg=="") {
+                        alert("批量导入成功。");
+                    }
+                    else {
+                        alert(msg);
+                    }
+                },
+                error: function (e) {
+                    alert(e);
+                }
+            });
+        }
+
+
+        function cancelImportData() {
+            sessionStorage.removeItem("FileUploadedResult");
+        }
+
+
+    </script>
+</head>
+<body>
+    <!-- 头部 star -->
+    <input type="hidden" value=@ViewBag.Token id="hdnToken" />
+    <div id="top" class="">
+        <div class="col-md-6 col-md-offset-3 col-sm-offset-2 col-sm-8 col-xs-12" style="padding:0">
+            <div class="col-sm-4 col-xs-3 colorac h4">
+                LOGO
+            </div>
+            <ul class="col-sm-8 col-xs-9 text-right nav_menu">
+                @*
+                    <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLHome/Index">首页</a></li>*@
+                @if (userProfileInfo.role != "90")
+                {
+                    <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLProject/ProjectList">项目</a></li>
+                }
+
+                <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLMessage/MessageIndex?pageType=1">留言板</a><span class="news text-top"></span></li>
+                @if (userProfileInfo.role == "90" || userProfileInfo.role == "80")
+                {
+                    <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLManage/ManageIndex">管理</a></li>
+                }
+
+            </ul>
+        </div>
+    </div>
+    <!-- 头部 end -->
+    <!-- 页面内容 star -->
+    <div class="container" style="overflow-x:hidden;">
+        <!-- 页面菜单 -->
+        <div id="menu" class="text-right margin-t5 " style="margin-bottom:5px">
+            <!-- 搜索按钮 -->
+            <!--<button class="btn btn-transparent margin-w5" style="line-height: 9px"><img src="../images/icon5.png"></button>-->
+            <!-- 医院管理按钮 -->
+            <div class="btab btn-tab1" style="display:none;">
+                @{
+                    if (userProfileInfo.role == "90")//只有超级管理员才有新增和导入医院功能
+                    {
+                        <button class="btn btn-transparent margin-w5 colorfe" data-toggle="modal" data-target="#add_hospital">
+                            <img class="pad-w5" style="margin-top:-3px" src="../images/icon4.png">新增医院
+                        </button>
+                        <button class="btn btn-transparent margin-w5 colorfe in-hospital" style="display:none">
+                            <img class="pad-w5" style="margin-top:-3px" src="../images/icon3.png">导入医院
+                        </button>
+                    }
+                }
+
+                <button class="btn btn-transparent margin-w5 colorfe btn_user">
+                    <span class="head-pic">
+                        <img src="@userProfileInfo.avatar" />
+                    </span>
+                    <span class="pad-w5">@userProfileInfo.username</span>
+                </button>
+            </div>
+            <!-- 用户管理 -->
+            <div class="btab btn-tab2" style="display:none;">
+                <button class="btn btn-transparent margin-w5 colorfe add-user min_btn" style="margin-bottom: 10px;" data-toggle="modal" data-target="#adduser">
+                    <img class="pad-w5" style="margin-top:-3px" src="../images/icon4.png">新增用户
+                </button>
+                <button class="btn btn-transparent margin-w5 colorfe in-user min_btn" style="margin-bottom: 10px;" data-toggle="modal" data-target="#leaduser">
+                    <img class="pad-w5" style="margin-top:-3px" src="../images/icon3.png">导入用户
+                </button>
+                <button class="btn btn-transparent margin-w5 colorfe btn_user min_btn" style="margin-bottom: 10px;" style="position:relative">
+                    <span class="head-pic" style="margin:0;padding:0;position:absolute;left:0;top:0">
+                        <img src="@userProfileInfo.avatar" />
+                    </span>
+                    <span class="pad-w5" style="padding-left:35px">@userProfileInfo.username</span>
+                </button>
+            </div>
+            <!-- 病例管理 -->
+            <div class="btab btn-tab3" style="display:none;">
+                <button class="btn btn-transparent margin-w5 colorfe add-case">
+                    <img class="pad-w5" style="margin-top:-3px" src="../images/icon4.png">新增病例
+                </button>
+                <button class="btn btn-transparent margin-w5 colorfe btn_user">
+                    <span class="head-pic">
+                        <img src="@userProfileInfo.avatar" />
+                    </span>
+                    <span class="pad-w5">@userProfileInfo.username</span>
+                </button>
+            </div>
+            <div class="btab btn-tab4" style="display:block;">
+                <button class="btn btn-transparent margin-w5 colorfe btn_user">
+                    <span class="head-pic">
+                        <img src="@userProfileInfo.avatar" />
+                    </span>
+                    <span class="pad-w5" id="show_username">@userProfileInfo.username</span>
+                </button>
+            </div>
+        </div>
+        <!-- 页面面板 star -->
+        <!-- 个人中心 -->
+        <div class="col-sm-3 col-md-2 col-lg-1 margin-t10" id="user_settings" style="display:none">
+            <div class="panel panel-default pad-h10" style="min-width: 100px;">
+                <ul class="pad-w201">
+                    <li data-toggle="modal" data-target="#personal_data"><a class="btn_settings">个人设置</a></li>
+                    <li data-toggle="modal" data-target="#change_password"><a class="btn_editpass">修改密码</a></li>
+                    <li class="btn_exit"><a href="javascript:;" style="display:block;">退出</a></li>
+                </ul>
+            </div>
+        </div>
+        <!-- 页面面板 end -->
+        <!-- 页面板块 -->
+        <div class="row" style="margin-right:0;">
+            <div class="row" style="margin-bottom:10px">
+                <span class="col-xs-9 colorfe">
+                    <button class="btn btn-transparent margin-w5 colorfe btn_openManage"><img style="margin-top:-3px" src="../images/icon27.png"></button>
+                </span>
+                <span class="col-xs-3 text-right"></span>
+            </div>
+            <!-- 面板1 -->
+            <div class="col-sm-12 col-md-3 tab1">
+                <div class="panel tab1-2" style="display:block">
+                    <ul class="penal-manage">
+                        <li data-tab="tab4-2" data-btn="btn-tab1">医院管理</li>
+                        <li data-tab="tab7-1" data-btn="btn-tab2" id="user-manage">用户管理</li>
+                        <li data-tab="tab12" data-btn="btn-tab4" id="tpl-detail">模板分类</li>
+                    </ul>
+                </div>
+            </div>
+            <!-- 面板2 权限组-->
+            <div class="col-sm-6 col-md-3 col-lg-2 margin-t10 tab2" style="display:none">
+                <!-- 权限组查看 -->
+                <div class="panel panel-default pad-h10 tab2-1">
+                    <p class="pad-w20 margin-t10" style="margin-bottom: 0">
+                        权限组
+                    </p>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <input class="form-control edit-power" id="txt-power1" type="text" value="系统管理员" readonly>
+                            <input class="form-control margin-h10 edit-power" id="txt-power2" type="text" value="医院管理员" readonly>
+                            <input class="form-control margin-h10 edit-power" id="txt-power3" type="text" value="PI" readonly>
+                            <input class="form-control margin-h10 edit-power" id="txt-power4" type="text" value="医生" readonly>
+                            <input class="form-control margin-h10 edit-power" id="txt-power5" type="text" value="患者" readonly>
+                        </div>
+                    </div>
+                </div>
+                <!-- 权限组编辑 -->
+                <div class="panel panel-default pad-h10 tab2-2" style="margin-right: -20px">
+                    <div class="panel-body">
+                        <input type="text" class="form-control power-text" data-id="" value="系统管理员">
+                    </div>
+                    <button type="button" class="btn btn-default pad-w20 btn-save2-2" style="margin:0 5px 0 20px">确定</button>
+                    <button type="button" class="btn btn-default pad-w20" onclick='clone("tab2-2")'>取消</button>
+                </div>
+                <!-- 权限组管理 -->
+                <div class="panel panel-default pad-h10 tab2-3">
+                    <p class="pad-w20 margin-t10" style="margin-bottom: 0">
+                        权限组
+                    </p>
+                    <div class="panel-body">
+                        <ul class="hospital margin-t10 power-line">
+                            <li class="active"><span>系统管理员</span></li>
+                            <li><span>医院管理员</span></li>
+                            <li><span>PI</span></li>
+                            <li><span>医生</span></li>
+                            <li><span>患者</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- 权限组权限编辑 -->
+                <div class="panel panel-default pad-h10 tab2-4">
+                    <p class="pad-w20 margin-t10 row" style="margin-bottom: 0">
+                        <span class="col-xs-6">权限组</span><span class="col-xs-2">读取</span><span class="col-xs-2">修改</span><span class="col-xs-2">管理</span>
+                    </p>
+                    <div class="panel-body">
+                        <ul class="hospital margin-t10">
+                            <li>
+                                项目
+                                <ul class="pad-w5">
+                                    <li style="overflow:auto">
+                                        <span class="col-xs-6">立项</span>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox1" value="option1">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox2" value="option2">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox3" value="option3">
+                                        </label>
+                                    </li>
+                                    <li style="overflow:auto">
+                                        <span class="col-xs-6">归档激活</span>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox1" value="option1">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox2" value="option2">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox3" value="option3">
+                                        </label>
+                                    </li>
+                                    <li style="overflow:auto">
+                                        <span class="col-xs-6">移除</span>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox1" value="option1">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox2" value="option2">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox3" value="option3">
+                                        </label>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                添加主数据
+                                <ul class="pad-w5">
+                                    <li style="overflow:auto">
+                                        <span class="col-xs-6">添加医院</span>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox1" value="option1">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox2" value="option2">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox3" value="option3">
+                                        </label>
+                                    </li>
+                                    <li style="overflow:auto">
+                                        <span class="col-xs-6">添加PI</span>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox1" value="option1">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox2" value="option2">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox3" value="option3">
+                                        </label>
+                                    </li>
+                                    <li style="overflow:auto">
+                                        <span class="col-xs-6">添加医生</span>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox1" value="option1">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox2" value="option2">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox3" value="option3">
+                                        </label>
+                                    </li>
+                                    <li style="overflow:auto">
+                                        <span class="col-xs-6">添加病人</span>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox1" value="option1">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox2" value="option2">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox3" value="option3">
+                                        </label>
+                                    </li>
+                                    <li style="overflow:auto">
+                                        <span class="col-xs-6">添加模板</span>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox1" value="option1">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox2" value="option2">
+                                        </label>
+                                        <label class="col-xs-2">
+                                            <input type="checkbox" id="inlineCheckbox3" value="option3">
+                                        </label>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>留言公告</li>
+                        </ul>
+                        <button type="button" class="btn btn-default pad-w2s0 btn-save2-4">保存</button>
+                        <button type="button" class="btn btn-default pad-w2s0" onclick="clone('tab2-4')">取消</button>
+                    </div>
+                </div>
+            </div>
+            <!-- 面板3 导入医院 -->
+            <div class="col-sm-6 col-md-4 margin-t10 tab3" style="position:absolute">
+                <div class="panel panel-default">
+                    <div class="panel-heading h5 pad-h10 pad-w20">
+                        导入医院
+                    </div>
+                    <div class="panel-body">
+                        <form action='' method='post' enctype='multipart/form-data' id="formFileHospitalTemp">
+                            <div>
+                                <button type="submit" class="btn btn-success pull-right" id="uploadhospitaltemp">导入</button>
+                                <div style="margin-right: 70px;">
+                                    <input type="file" name="Filedata" class="form-control" placeholder="导入医院模板">
+                                </div>
+                            </div>
+                        </form>
+                        <a href="" class="pad-w5 template-user" id="tplofhospital">医院模板下载</a>
+                    </div>
+
+                    <div class="panel-footer" style="border-top: 1px solid #ddd">
+                        <button type="button" class="btn btn-default pad-w20" onclick="EditHospital()">确定</button>
+                        <button type="button" class="btn btn-default pad-w20" onclick="clone('tab3')">取消</button>
+                    </div>
+                </div>
+            </div>
+            <!-- 面板4 新增医院 -->
+            <div class="col-md-6  col-sm-12 tab4-2">
+                <div class="panel">
+                    <div class="panel-heading">
+                        <button type="button" class="close" onclick="clone('tab4-2')">×</button>
+                        <h3 class="panel-title">医院名称</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group" id="hostpital-list">
+                            @foreach (var item in hsr.data.data)
+                            {
+                                <button class="form-control text-left margin-h10 c-hospitals-name" data-toggle='modal' data-target='#edit_hospital' id="@item.id">@item.title</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 医院组 -->
+            <div class="col-md-4  col-sm-12 tab7-1">
+                <div class="panel">
+                    <div class="panel-heading">
+                        <button type="button" class="close" onclick="clone('tab7-1')">×</button>
+                        <h3 class="panel-title">医院名称</h3>
+                    </div>
+                    <div class="panel-body">
+                        <ul class="hospital margin-t10 hospital-line" id="HospitalUser"></ul>
+                    </div>
+                </div>
+            </div>
+            <!-- 用户组 -->
+            <div class="col-md-4 col-sm-12 tab7-2">
+                <div class="panel">
+                    <div class="panel-heading">
+                        <button type="button" class="close" onclick="clone('tab7-2')">×</button>
+                        <h3 class="panel-title">用户</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group" id="HospitalUserList"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- 面板10 病例分类 暂时不做 -->
+            <div class="col-sm-6 col-md-3 margin-t10 tab10">
+                <!-- 病例分类 -->
+                <div class="panel panel-default pad-w20 pad-h10 tab10-1">
+                    <p class="margin-t10" style="margin-bottom: 0">
+                        病例分类
+                    </p>
+                    <input type="text" class="form-control margin-t10" placeholder="输入关键字进行过滤">
+                    <ul class="hospital margin-t10 case-list">
+                        <li>
+                            内科
+                            <ul class="pad-w5">
+                                <li>肾脏内科</li>
+                                <li>
+                                    消化内科
+                                    <ul class="pad-w5">
+                                        <li>食道癌</li>
+                                        <li>胰腺癌</li>
+                                    </ul>
+                                </li>
+                                <li>心脏内科</li>
+                                <li>呼吸内科</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <button type="button" class="btn btn-default margin-w10" onclick="clone('tab10-1')">关闭</button>
+                </div>
+                <!-- 病例分类编辑 -->
+                <div class="panel panel-default tab10-2">
+                    <div class="panel-footer" style="border-radius: 5px;">
+                        <form class="form-horizontal" style="padding: 0 15px;">
+                            <div class="form-group">
+                                <label class="col-sm-3 col-xs-2 pad-w5 pad-h5 cCenter">病例名称</label>
+                                <div class="col-sm-9 col-xs-10 pad-w5">
+                                    <input type="text" class="form-control" placeholder="请输入名字">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 col-xs-2 pad-w5 pad-h5 cCenter">上一层级</label>
+                                <div class="col-sm-9 col-xs-10 pad-w5">
+                                    <select class="form-control slc">
+                                        <option>1</option>
+                                        <option>2</option>
+                                        <option>3</option>
+                                        <option>4</option>
+                                        <option>5</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-default">保存</button>
+                            <button type="button" class="btn btn-default" onclick="clone('tab10-2')">关闭</button>
+                        </form>
+                    </div>
+                </div>
+                <!-- 编辑周期 -->
+                <div class="panel panel-default tab10-3">
+                    <div class="panel-body" style="border-radius: 5px;">
+                        <form class="form-horizontal pad-w5">
+                            <div class="form-group">
+                                <label class="col-xs-2 pad-w5 pad-h5 cCenter">周期</label>
+                                <div class="col-xs-10">
+                                    <select class="form-control slc" id="tpl-period">
+                                        <option>1</option>
+                                        <option>2</option>
+                                        <option>3</option>
+                                        <option>4</option>
+                                        <option>5</option>
+                                        <option>6</option>
+                                        <option>7</option>
+                                        <option>8</option>
+                                        <option>9</option>
+                                        <option>10</option>
+                                        <option>11</option>
+                                        <option>12</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-2 pad-w5 pad-h5 cCenter">频次</label>
+                                <div class="col-xs-10">
+                                    <select class="form-control slc" id="tpl-freqs">
+                                        <option>1</option>
+                                        <option>2</option>
+                                        <option>3</option>
+                                        <option>4</option>
+                                        <option>5</option>
+                                        <option>6</option>
+                                        <option>7</option>
+                                        <option>8</option>
+                                        <option>9</option>
+                                        <option>10</option>
+                                        <option>11</option>
+                                        <option>12</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <input type="hidden" id="tplid" />
+                            <button type="button" class="btn btn-default" id="savePeriodFreqs">保存</button>
+                            <button type="button" class="btn btn-default" onclick="clone('tab10-3')">取消</button>
+                        </form>
+                        <a href="#" class="btn_editTimes"><img src="../images/icon16.png" style="margin-right: 8px;">自定义周期、频次</a>
+                    </div>
+                </div>
+                <!-- 自定义周期 -->
+                <div class="panel panel-default tab10-4">
+                    <div class="panel-body" style="border-radius: 5px;">
+                        <form class="form-horizontal pad-w5">
+                            <div class="form-group">
+                                <label class="col-xs-2 pad-w5 pad-h5 cCenter">周期</label>
+                                <div class="col-xs-10">
+                                    <input type="text" class="form-control" placeholder="请输入周期(例如:每三天)" id="tpl-cus-period">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-xs-2 pad-w5 pad-h5 cCenter">频次</label>
+                                <div class="col-xs-10">
+                                    <input type="text" class="form-control" placeholder="请输入频次(例如:1次)" id="tpl-cus-freqs">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-default" id="savecustomperifreq">保存</button>
+                            <button type="button" class="btn btn-default" onclick="clone('tab10-4')">取消</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- 面板12 编辑病例模板 -->
+            <div class="col-sm-12 col-md-12 tab12">
+                <div class="panel">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">模板分类</h3>
+                        <button type="button" class="close" onclick="clone('tab12')">&times;</button>
+                        <div class="panel-body">
+                            <div class="template-loading">
+                                <h3>
+                                    正在加载模板中，请稍等...
+                                </h3>
+                            </div>
+                            <div class="template-classify">
+                                <table class="table table-striped" style="margin-bottom: 0;">
+                                    <thead style="border-top-left-radius:5px;border-top-right-radius:5px;-webkit-border-top-left-radius:5px;-webkit-border-top-right-radius:5px;-moz-border-radius-topleft:5px;-moz-border-radius-topright:5px;">
+                                        <tr>
+                                            <th>名称</th>
+                                            @*<th>周期频次</th>*@
+                                            <th>一级子模板</th>
+                                            <th>二级子模板</th>
+                                            <th>指标</th>
+                                            <th>病人是否可编辑</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tpl-detailbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <button type="button" class="btn btn-default margin-w10 margin-h10" id="tpl-change">保存</button>
+                            <button type="button" class="btn btn-default" onclick="clone('tab12')">取消</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 页面内容 end -->
+    <!-- 弹框 star -->
+    <!-- 导入用户弹框 -->
+    <div class="modal fade" id="leaduser" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        导入用户
+                    </h4>
+                </div>
+                <div class="modal-body">
+
+                    <form action='' method='post' enctype='multipart/form-data' id="formFileUserTemp">
+                        <div style="padding-bottom:8px;">
+                            <button type="button" class="btn btn-success pull-right" id="uploadusertemp">上传</button>
+                            <div class="g-upload-file">
+                                <input type="text" name="textfield" id="textfield" class="txt-file">
+                                <input type="button" class="btn-file" value="浏览..." style="">
+                                <input type="file" id="textfile" name="Filedata" class="form-control btn-file2" onchange="ChooseFileDone(this.value)">
+                            </div>
+                        </div>
+                    </form>
+                    <a href="" class="pad-w5 template-user" id="tplofuser-80">医院管理员模板下载</a><br>
+                    <a href="" class="pad-w5 template-user" id="tplofuser-20">PI模板下载</a><br>
+                    <a href="" class="pad-w5 template-user" id="tplofuser-10">医生模板下载</a><br>
+                    <a href="" class="pad-w5 template-user" id="tplofuser--10">患者模板下载</a>
+                </div>
+                <div class="modal-footer" style="text-align: left">
+                    @*<button type="button" class="btn btn-default pad-w20" onclick="importDataFromFile()">导入</button>*@
+                    <button type="button" class="btn btn-default pad-w20" onclick="clone('tab9')" data-dismiss="modal">取消</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!-- 用户修改/移除弹框 -->
+    <div class="modal fade" id="modle7-3" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        用户修改/移除
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <form class="margin-h10">
+                        <div class="form-horizontal margin-h10" role="form">
+                            @*<div class="form-group">
+                                    <label for="" class="col-sm-2">权限</label>
+                                    <div class="col-sm-10">
+                                        <label class="checkbox-inline col-lg-2 col-sm-3 col-xs-6" style="padding:0">
+                                            <input type="radio" name="optionsRadiosinline" id="optionsRadios1" value="20" checked="">&nbsp;&nbsp;&nbsp;PI
+                                        </label>
+                                        <label class="checkbox-inline col-lg-2 col-sm-3 col-xs-6" style="padding:0">
+                                            <input type="radio" name="optionsRadiosinline" id="optionsRadios2" value="10">&nbsp;&nbsp;&nbsp;医生
+                                        </label>
+                                    </div>
+                                </div>*@
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">角色</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="user-role-move" readonly="readonly">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">姓名</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="user-name-move">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">科室</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="user-deptname-move">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">职称</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="user-duty-move">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">手机</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="user-mobile-move" readonly="readonly">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">电话</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="user-tel-move">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">身份证</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="user-idcard-move" readonly="readonly">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">邮箱</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="user-email-move">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">医院名称</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="user-hospitalname-move" readonly="readonly">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-default" id="user-update">修改</button>
+                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#personalMove"><img style="margin:-3px 5px 0 0" src="../images/icon28.png">移除用户</button>
+                        <button type="button" class="btn btn-default" onclick="clone('tab7-3')" data-dismiss="modal">关闭</button>
+                    </form>
+                </div>
+
+
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!--移除用户弹窗-->
+    <!-- 新增医院 -->
+    <div class="modal fade" id="add_hospital" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel" aria-hidden="true" style="z-index:9999">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        新增医院
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control" placeholder="医院名称" id="hospital_title">
+                    <input type="text" class="form-control margin-h10" placeholder="医院地址" id="hospital_address">
+                    <input type="text" class="form-control margin-h10" placeholder="医院电话" id="hospital_telphone">
+                    <input type="text" class="form-control margin-h10" placeholder="科室" id="hospital_deptname">
+                    <input type="text" class="form-control margin-h10" placeholder="18位身份证" id="hospital_idcard">
+                    <input type="text" class="form-control margin-h10" placeholder="联系人" id="hospital_contact">
+                    <input type="text" class="form-control margin-h10" placeholder="手机号码" id="hospital_mobile">
+                </div>
+                <div class="modal-footer" style="text-align: left">
+                    <button type="button" class="btn btn-default pad-w20" onclick="createAjaxHospital()">保存</button>
+                    <button type="button" class="btn btn-default pad-w20 btn_cp_cancel" data-dismiss="modal" aria-hidden="true">取消</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!-- 个人资料 -->
+    <!-- 修改医院信息 -->
+    <div class="modal fade" id="edit_hospital" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel" aria-hidden="true" style="z-index:9999">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        医院信息
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <form class="margin-h10">
+                        <div class="form-horizontal margin-h10" role="form">
+                            <div class="form-group">
+                                <label for="" class="col-sm-3">医院名称</label>
+                                <div class="col-sm-9">
+                                    <input type="text" id="title" class="form-control" value="上海长江医院">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="" class="col-sm-3">医院地址</label>
+                                <div class="col-sm-9">
+                                    <input type="text" id="address" class="form-control" value="闵行区xx路xx号">
+                                </div>
+                            </div>
+                            <div class="form-group" style="display:none">
+                                <label for="" class="col-sm-3">联系人</label>
+                                <div class="col-sm-9">
+                                    <input type="text" id="contact" class="form-control" value="胡某">
+                                </div>
+                            </div>
+                            <div class="form-group" style="display:none">
+                                <label for="" class="col-sm-3">手机号码</label>
+                                <div class="col-sm-9">
+                                    <input type="text" id="mobile" class="form-control" value="1376532155">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-3">医院电话</label>
+                                <div class="col-sm-9">
+                                    <input type="text" id="hosp-telphone" class="form-control" value="021-87536969">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-3">科室名称</label>
+                                <div class="col-sm-9">
+                                    <input type="text" id="deptname" class="form-control" value="1376532155">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="text-align: left">
+                    <button type="button" class="btn btn-default pad-w20 margin-t10 edit-hospital">修改</button>
+                    <button type="button" class="btn btn-default pad-w20 margin-t10" data-dismiss="modal" aria-hidden="true">取消</button>
+                    <button type="button" style="margin-top:10px;" class="btn btn-default pull-right remove-hospital-msg">
+                        <img style="margin:-3px 5px 0 0" src="../images/icon28.png">移除医院
+                    </button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!-- 修改密码 -->
+    <div class="modal fade" id="change_password" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel" aria-hidden="true" style="z-index:9999">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        修改密码
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <input type="password" class="form-control" placeholder="当前密码" id="passold">
+                    <input type="password" class="form-control margin-h10" placeholder="新密码" id="passnew1">
+                    <input type="password" class="form-control margin-h10" placeholder="再次输入新密码" id="passnew2">
+                </div>
+                <div class="modal-footer" style="text-align: left">
+                    <button type="button" class="btn btn-default pad-w20 btn_cp_save" data-dismiss="modal">保存</button>
+                    <button type="button" class="btn btn-default pad-w20 btn_cp_cancel" data-dismiss="modal" aria-hidden="true">取消</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!-- 个人资料 -->
+    <div class="modal fade" id="personal_data" tabindex="-1" role="dialog"
+         aria-labelledby="myModalLabel" aria-hidden="true" style="z-index:9999">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        个人资料
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-horizontal" role="form">
+                        <div class="form-group">
+                            <label for="" class="col-sm-2" style="line-height: 3">头像</label>
+                            <div class="col-sm-10">
+                                <span class="head-pic-md middle"><img id="header-pic" style="width:50px;height:50px" src="@userProfileInfo.avatar" /></span>
+                                <form action='' method='post' enctype='multipart/form-data' id="formFileUserPic">
+                                    <input type="file" class="btn btn-info btn_upload" style="cursor: pointer;" onchange="javascript:$('#uploaduserpic').show();" name="Filedata" placeholder="点击上传头像">
+                                </form>
+                                <input type="button" value="上传" id="uploaduserpic" class="btn btn-success">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">姓名</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="username" value="@userProfileInfo.username">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">科室</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="dept" value="@userProfileInfo.deptname">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">职称</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="jobtitle" value="@userProfileInfo.duty">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">手机</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="mobilephone" value="@userProfileInfo.mobile" readonly="readonly">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">电话</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="telphone" value="@userProfileInfo.tel">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">身份证</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="idcard" value="@userProfileInfo.idcard">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">邮箱</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="email" value="@userProfileInfo.email">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">医院名称</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="hospitalname" value="" readonly="readonly">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="text-align: left">
+                    <button type="button" class="btn btn-default btn_pd_save">保存</button>
+                    <button type="button" class="btn btn-default margin-w5 btn_cancel" data-dismiss="modal" aria-hidden="true">取消</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!-- 移除医院弹框 -->
+    <div class="modal fade" id="personalData" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        移除医院
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    移除医院后无法还原，<br>
+                    确认要移除吗?
+                </div>
+                <div class="modal-footer" style="text-align: left">
+                    <button type="button" class="btn btn-danger pad-w20 remove-hospital" data-dismiss="modal">移除</button>
+                    <button type="button" class="btn btn-default pad-w20" data-dismiss="modal">取消</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!-- 移除用户弹框 -->
+    <div class="modal fade" id="personalMove" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        移除用户
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    移除用户后无法还原，<br>
+                    确认要移除吗?
+                </div>
+                <div class="modal-footer" style="text-align: left">
+                    <button type="button" class="btn btn-danger pad-w20" data-dismiss="modal" id="user-moved">移除</button>
+                    <button type="button" class="btn btn-default pad-w20" data-dismiss="modal">取消</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!-- 新增用户弹框 -->
+    <div class="modal fade" id="adduser" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close"
+                            data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        新增用户
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-horizontal margin-h10" role="form">
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">权限</label>
+                            <div class="col-sm-10">
+                                <label class="checkbox-inline col-lg-3 col-sm-3 col-xs-6" style="padding:0">
+                                    <input type="radio" name="optionsRadiosinline" id="optionsRadios1" value="80">&nbsp;&nbsp;&nbsp;医院管理员
+                                </label>
+                                <label class="checkbox-inline col-lg-3 col-sm-3 col-xs-6" style="padding:0">
+                                    <input type="radio" name="optionsRadiosinline" id="optionsRadios2" value="20" checked>&nbsp;&nbsp;&nbsp;PI
+                                </label>
+                                <label class="checkbox-inline col-lg-3 col-sm-3 col-xs-6" style="padding:0">
+                                    <input type="radio" name="optionsRadiosinline" id="optionsRadios3" value="10">&nbsp;&nbsp;&nbsp;医生
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">姓名</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="user-name">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">科室</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="user-deptname">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">职称</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="user-duty">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">手机</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="user-mobile">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">电话</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="user-tel">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">邮箱</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="user-email">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">医院名称</label>
+                            <div class="col-sm-10">
+
+
+                                <input type="text" class="form-control" id="user-hospitalname" disabled="disabled">
+
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-sm-2">身份证ID</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="user-idcard">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer" style="text-align: left">
+                    <button type="button" class="btn btn-default pad-w20" onclick="AddAjaxUser()">保存</button>
+                    <button type="button" class="btn btn-default pad-w20" data-dismiss="modal">取消</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!-- 弹出框背景 -->
+    <div class="modalsBg" style="display: none;"></div>
+    <!-- 弹框 end -->
+    <script type="text/javascript">
+        $(function () {
+            //导入医院
+            $(".in-hospital").click(function () {
+                $(".tab3").css("display", "block").css("top", ($(this).offset().top + 40));
+            })
+            //导入用户
+            $(".in-user").click(function () {
+                $(".tab9").css("display", "block").css("top", ($(this).offset().top + 40));
+            })
+            //新增病例
+            $(".add-case").click(function () {
+                $(".tab10-2").css("display", "block").css("top", ($(this).offset().top + 40)).css("left", "80%");
+            })
+            //弹出权限组
+            $(".btn_openPower").click(function () {
+                if ($(".tab1-1").css("display") == "none") {
+                    $(".tab1-1").css("display", "block");
+                }
+                else {
+                    $(".tab1-1").css("display", "none");
+                    $(".tab2-1").css("display", "none");
+                    $(".tab2-2").css("display", "none");
+                    $(".tab2-3").css("display", "none");
+                    $(".tab2-4").css("display", "none");
+                }
+            })
+
+            $(".penal-manage > li").click(function () {
+                var tab = $(this).attr("data-tab");
+                var btn = $(this).attr("data-btn");
+                //点击医院管理
+                if(tab == "tab4-2"){
+                    $(".tab7-1,.tab7-2,.tab12").hide();
+                }
+                //点击用户管理
+                if(tab == "tab7-1"){
+                    $(".tab4-2,.tab12").hide();
+                    $(".add-user,.in-user").css("display", "inline-block");
+                }
+                //点击模板管理
+                if(tab == "tab12"){
+                    $(".tab4-2,.tab7-1,.tab7-2").hide();
+                }
+                if ($("." + tab).css("display") == "none") {
+                    $("." + tab).css("display", "block");
+                    $(".btab").css("display", "none");
+                    $("." + btn).css("display", "block");
+                }
+                else {
+                    $("." + tab).css("display", "none");
+                    $(".add-user,.in-user").css("display", "none");
+                }
+            })
+            //弹出管理组
+            $(".btn_openManage").click(function () {
+                if ($(".tab1-2").css("display") == "none") {
+                    $(".tab1-2").css("display", "block");
+                }
+                else {
+                    $(".tab1-2").css("display", "none");
+                    $(".tab4-2").css("display", "none");
+                    $(".tab5").css("display", "none");
+                    //$(".btab").css("display", "none");
+                    $(".tab7-1").css("display", "none");
+                    $(".tab7-2").css("display", "none");
+                    $(".tab7-3").css("display", "none");
+                    $(".tab12").css("display", "none");
+                    $(".add-user,.in-user").css("display", "none");
+                }
+            })
+            //编辑管理组资料
+            $(".edit-power").click(function () {
+                var top = $(this).offset().top;
+                $(".tab2-2").css("display", "block").css("top", top - 20);
+                $(".power-text").val($(this).val());
+                $(".power-text").attr("data-id", $(this).attr("id"))
+            })
+            //保存权限组更改名称
+            $(".btn-save2-2").click(function () {
+                $(".tab2-2").css("display", "none");
+                //需要更改的权限组名称id
+                var id = $(".power-text").attr("data-id");
+                //更改的值
+                var val = $(".power-text").val();
+                $("#" + id).val($(".power-text").val());
+            })
+            //权限组角色权限编辑
+            $(".power-line > li").click(function () {
+                $(".tab2-4").css("display", "block")
+            })
+            //保存权限组角色编辑
+            $(".btn-save2-4").click(function () {
+
+            })
+            //编辑医院
+            //$(".c-hospitals-name").click(function () {
+            //    $(".tab5").css("display", "block");
+            //})
+            $(document).on("click",".c-hospitals-name",function(){
+                //$(".tab5").css("display", "block");
+                HospitalDetail($(this).attr("id"))
+            })
+            //医院用户编辑
+            //$(".hospital-line > li").click(function () {
+            //    $(".tab7-2").css("display", "block")
+            //})
+
+            $(document).on("click",".hospital-line > li",function(){
+                $(".tab7-2").css("display", "block")
+            })
+
+            //移除用户
+            //$(".move-user").click(function () {
+            //    $(".tab7-3").css("display", "block")
+            //})
+            $(document).on("click",".move-user",function(){
+                //$(".tab7-3").css("display", "block").css("top", ($(this).offset().top-60));//css是调显示位置的
+                $("#modle7-3").modal("show");
+                var userid=$(this).attr("id");
+                currentUserId=userid;
+
+                $.each(hospitaluserlist,function(d,item){
+                    if (userid==item.id) {
+                        role=GetRoleName(item.role);
+                        $("#user-role-move").val(role);//角色
+                        $("#user-name-move").val(item.username);//姓名
+                        $("#user-mobile-move").val(item.mobile);//手机
+                        $("#user-idcard-move").val(item.idcard);//身份证
+                        $("#user-email-move").val(item.email);//邮箱
+
+
+                        $("#user-deptname-move").val(item.deptname);//科室
+                        $("#user-duty-move").val(item.duty);//职称
+                        $("#user-tel-move").val(item.tel);//电话
+                        $("#user-hospitalname-move").val(item.hospital.title);//医院名称
+
+
+
+
+                    }});
+
+                //var role=$(this).find("span").eq(0).text();//获得第一个span值
+                //var username=$(this).find("span").eq(1).text();//获得第二个span值
+                //$(".user-moving").find("span").eq(0).text(role);
+                //$(".user-moving").find("span").eq(1).text(username);
+            })
+
+            //病例分类编辑
+            $(".case-list > li").click(function () {
+                $(".tab10-2").css("display", "block").css("top", ($(this).offset().top + 40)).css("left", 380);
+            })
+            //模板编辑周期
+            //$(".btn_editTime").click(function(){
+            //    $(".tab10-3").css("display","block").css("top", ($(this).offset().top + 20)).css("left", 70);
+            //    $(".tab10-4").css("top", ($(this).offset().top + 20)).css("left", 70);
+            //})
+            //支持动态生成的html增加事件
+            $(document).on("click", ".btn_editTime", function(){
+
+                var tplid= $(this).parent().parent().children("td:eq(0)").find(":hidden").eq(0).val();
+                $("#tplid").val(tplid);
+
+                //var period = $(this).parent().parent().children("td:eq(1)").find(":hidden").eq(0).val();
+                //var freqs =  $(this).parent().parent().children("td:eq(1)").find(":hidden").eq(1).val();
+                var period = "";
+                var freqs = "";
+                $.each(templateData, function(i,t){
+                    if(t.data.id == tplid){
+                        period = t.data.period;
+                        freqs = t.data.freqs;
+                    }
+                });
+
+                //alert(period + " " + freqs);
+
+                $("#tpl-period").val(period);
+                $("#tpl-freqs").val(freqs);
+
+                $(".tab10-3").css("display","block").css("top", ($(this).offset().top + 20)).css("left", 70);
+                $(".tab10-4").css("top", ($(this).offset().top + 20)).css("left", 70);
+            })
+            //自定义模版周期
+
+            //$(".btn_editTimes").click(function(){
+            //    $(".tab10-3").css("display","none");
+            //    $(".tab10-4").css("display","block");
+            //})
+            $(document).on("click", ".btn_editTimes", function(){
+
+                var tplid= $(this).parent().parent().children("td:eq(0)").find(":hidden").eq(0).val();
+                $("#tplid").val(tplid);
+
+                //var period = $(this).parent().parent().children("td:eq(1)").find(":hidden").eq(0).val();
+                //var freqs =  $(this).parent().parent().children("td:eq(1)").find(":hidden").eq(1).val();
+                var period = "";
+                var freqs = "";
+                $.each(templateData, function(i,t){
+                    if(t.data.id == tplid){
+                        period = t.data.period;
+                        freqs = t.data.freqs;
+                    }
+                });
+
+                //alert(period + " " + freqs);
+
+                $("#tpl-cus-period").val(period);
+                $("#tpl-cus-freqs").val(freqs);
+
+                $(".tab10-4").css("top", ($(this).offset().top + 20)).css("left", 70).css("display","block");
+            })
+
+
+
+
+        })
+        //关闭弹出框公用方法
+        function clone(classs) {
+            $("." + classs).css("display", "none");
+        }
+    </script>
+    <!-- 个人资料js -->
+    <script type="text/javascript">
+        $(function () {
+            //个人管理
+            $(".btn_user").click(function () {
+                var show = $("#user_settings").css("display");
+                if (show == "none")
+                    $("#user_settings").css("display", "block");
+                else
+                    $("#user_settings").css("display", "none");
+            })
+
+            $(".btn_settings").click(function () {
+                $.ajax({
+                    url: "/F8YLUCenter/GetUserInfo?userid=@userProfileInfo.id",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            $("#username").val(retData.data.username);
+                            $("#dept").val(retData.data.deptname);
+                            $("#jobtitle").val(retData.data.duty);
+                            $("#mobilephone").val(retData.data.mobile);
+                            $("#telphone").val(retData.data.tel);
+                            $("#idcard").val(retData.data.idcard);
+                            $("#email").val(retData.data.email);
+                            if (typeof(retData.data.hospital)!="undefined") {
+                                $("#hospitalname").val(retData.data.hospital.title);
+                            }
+                            else {
+                                $("#hospitalname").val("");
+                            }
+
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+            })
+
+        });
+    </script>
+
+</body>
+</html>

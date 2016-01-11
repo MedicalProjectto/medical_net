@@ -1,0 +1,69 @@
+.webuploader-container {
+    position: relative;
+    margin-top: 10px;
+}
+
+.webuploader-element-invisible {
+    position: absolute !important;
+    clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
+    clip: rect(1px,1px,1px,1px);
+}
+
+.webuploader-pick {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    width: 20px;
+    height: 15px;
+    background: transparent url(../images/icon30.png) no-repeat;
+    background-size: 20px 15px;
+    text-indent: -9999px;
+    float: left;
+    margin-right: 5px;
+}
+
+#picker {
+    display: inline-block;
+    line-height: 1.428571429;
+    vertical-align: middle;
+    margin: 0 12px 0 0;
+}
+
+    #picker .webuploader-pick {
+        padding: 6px 12px;
+        display: block;
+    }
+
+.file-item .progress {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    height: 3px;
+    left: 4px;
+    height: 4px;
+    overflow: hidden;
+    z-index: 15;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+    .file-item .progress span {
+        display: block;
+        overflow: hidden;
+        width: 0;
+        height: 100%;
+        background: #d14 url(../images/progress.png) repeat-x;
+        -webit-transition: width 200ms linear;
+        -moz-transition: width 200ms linear;
+        -o-transition: width 200ms linear;
+        -ms-transition: width 200ms linear;
+        transition: width 200ms linear;
+        -webkit-animation: progressmove 2s linear infinite;
+        -moz-animation: progressmove 2s linear infinite;
+        -o-animation: progressmove 2s linear infinite;
+        -ms-animation: progressmove 2s linear infinite;
+        animation: progressmove 2s linear infinite;
+        -webkit-transform: translateZ(0);
+    }

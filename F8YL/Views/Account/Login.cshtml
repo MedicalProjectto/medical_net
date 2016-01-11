@@ -1,0 +1,39 @@
+﻿@using F8YL.Models
+@model LoginViewModel
+@{
+    ViewBag.Title = "登录";
+    //Layout = "~/Views/Shared/_LayoutAuth.cshtml";
+    //Layout = null;
+}
+
+
+<div class="login-box">
+    <div class="modal-content" style="padding:0 70px 30px 70px">
+        <div class="login-header cCenter">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                &times;
+            </button>
+            <span class="logo">LOGO</span>
+        </div>
+
+        <div class="login-body login-in">
+            @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                @Html.ValidationSummary(true);
+                @Html.TextBoxFor(m => Model.Phone, new { @class = "form-control login-tel pad-h20", placeholder = "请输入手机号", id = "Phone" })
+                @Html.ValidationMessageFor(m => Model.Phone)
+                @Html.TextBoxFor(m => Model.Password, new { @class = "form-control login-password margin-h30 pad-h20", placeholder = "请输入6-16位密码", id = "Password" })
+                @Html.ValidationMessageFor(m => Model.Password)
+                <button type="submit" class="btn btn-primary btn-block" style="height: auto;padding-top: 10px;padding-bottom: 10px;margin-top: 40px;">
+                    登录
+                </button>
+            }
+            <div class="pad-h10">
+                <a href="javascript:;" class="btn_back">返回登录</a>
+            </div>
+        </div>
+    </div><!-- /.modal-content -->
+</div>
+
+

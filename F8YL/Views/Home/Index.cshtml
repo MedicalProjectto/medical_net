@@ -1,0 +1,116 @@
+﻿@{
+    ViewBag.Title = "首页";
+    Layout = null;
+}
+@using F8YL.Models
+@model LoginViewModel
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta content="yes" name="apple-mobile-web-app-capable" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-extend.min.css">
+    <link rel="stylesheet" type="text/css" href="../css/base.css">
+    <link rel="stylesheet" type="text/css" href="../css/layout.css">
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <script src="../js/jquery-1.11.3.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="row margin-h10 header">
+        <div class="col-xs-6 cCenter">LOGO</div>
+        <div class="col-xs-6 cCenter"><a href="#">首页</a><button type="button" class="btn btn-primary btn-xs margin-w20 btn_login">登录</button></div>
+    </div>
+    <div class="index-text">
+        <h1 class="color333 cCenter">临床医患交互平台</h1>
+        <h2 class="cCenter margin-h10" style="color: #888;">方便科研指标统计和术后录入</h2>
+    </div>
+    <div class="login-box" style="display:none;">
+        <div class="modal-content" style="padding:0 70px 30px 70px">
+            <div class="login-header cCenter">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+                <span class="logo">LOGO</span>
+            </div>
+            <div class="login-body login-in">
+                @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post))
+            {
+                    @Html.AntiForgeryToken()
+                    @Html.ValidationSummary(true);
+                    @Html.TextBoxFor(m => Model.Phone, new { @class = "form-control login-tel pad-h20", placeholder = "请输入手机号", id = "Phone" })
+                    @Html.ValidationMessageFor(m => Model.Phone)
+                    @Html.TextBoxFor(m => Model.Password, new { @class = "form-control login-password margin-h30 pad-h20", placeholder = "请输入6-16位密码", id = "Password" })
+                    @Html.ValidationMessageFor(m => Model.Password)
+                    <button type="submit" class="btn btn-primary btn-block" style="height: auto;padding-top: 10px;padding-bottom: 10px;margin-top: 40px;">
+                        登录
+                    </button>
+                }
+                <div class="pad-h10">
+                    <a href="javascript:;" class="btn_back">返回登录</a>
+                </div>
+            </div>
+
+
+            <div class="login-body forget-pass" style="display:none">
+                <input type="text" class="form-control login-tel pad-h20" placeholder="请输入手机号">
+                <button type="button" class="btn btn-primary btn-block" style="height: auto;padding-top: 10px;padding-bottom: 10px;margin-top: 40px;">
+                    重置密码
+                </button>
+                <div class="pad-h10">
+                    <a href="javascript:;" class="btn_back">返回登录</a>
+                </div>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+    <!-- 弹出框背景 -->
+    <div class="modalsBg" style="display: none;"></div>
+    <script>
+        $(function () {
+            //点击登录
+            $(".btn_login").click(function () {
+                var display = $(".login-box").css("display");
+                $(".login-box").css("display", "block");
+                $(".modalsBg").css("display", "block");
+                $(".login-box").removeClass("fadeInUp animated-500");
+                $(".login-box").addClass("fadeInDown animated-500");
+            })
+            $(".btn_forget").click(function () {
+                $(".login-in").css("display", "none");
+                $(".forget-pass").css("display", "block");
+            })
+            $(".btn_back").click(function () {
+                $(".login-in").css("display", "block");
+                $(".forget-pass").css("display", "none");
+            })
+            //关闭弹出框
+            $(".close,.modalsBg").click(function () {
+                close();
+            })
+            //esc键关闭弹出框
+            $(document).keyup(function (event) {
+                switch (event.keyCode) {
+                    case 27:
+                        close();
+                    case 96:
+                        close();
+                }
+            });
+            //关闭弹出框公用方法
+            function close() {
+                $(".login-box").removeClass("fadeInDown animated-500");
+                $(".login-box").addClass("fadeInUp animated-500");
+                setTimeout(function () {
+                    $(".modalsBg").css("display", "none");
+                    $(".login-box").css("display", "none");
+                }, 500);
+            }
+        })
+    </script>
+</body>
+</html>

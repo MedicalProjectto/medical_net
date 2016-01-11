@@ -1,0 +1,598 @@
+﻿@{
+    Layout = null;
+}
+
+@using F8YL.Model;
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta content="yes" name="apple-mobile-web-app-capable" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
+    <title>项目列表</title>
+    <!-- bootstrap 样式 -->
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-extend.min.css">
+    <!-- 页面 样式 -->
+    <link rel="stylesheet" type="text/css" href="../css/base.css">
+    <link rel="stylesheet" type="text/css" href="../css/layout.css">
+    <link href="../css/style.css" rel="stylesheet" />
+    <!-- jQuery -->
+    <script src="../js/jquery-1.11.3.min.js"></script>
+    <script src="../js/jquery.placeholder.min.js"></script>
+    <script src="~/Scripts/UCenter/UCenter.js"></script>
+    <script src="~/js/uploadfile.js"></script>
+    <script src="~/js/jquery-form.js"></script>
+
+    <!-- bootstrap -->
+    <script src="../js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+
+        //归档
+        $(function () {
+
+            $(".yyy").click(function () {
+                $("#hiddenid").val($(this).attr("name"));
+            })
+
+            $("#filearchiving").click(function () {
+                $.ajax({
+                    url: "/F8YLProject/getprojectfiling?projectId=" + $("#hiddenid").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            alert("归档成功！");
+                            window.location.href = '/F8YLProject/ProjectList';
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+            })
+        })
+
+        function createNewProject() {
+
+            var projectName = $('#projectName').val();
+
+            var datajson = {
+                "projectName": projectName
+            };
+
+            $.ajax({
+                url: "/F8YLProject/CreateProject",
+                contentType: "application/json; charset=utf-8",
+                type: "POST",
+                data: JSON.stringify(datajson),
+                dataType: "json",
+                success: function (retData) {
+                    if (retData.code == 0) {
+                        window.location.href = '/F8YLProject/ProjectDetail?id=' + retData.data.id;
+                    }
+                    else {
+                        alert(retData.message);
+                    }
+                },
+                error: function (e) {
+                    alert(e);
+                }
+
+            })
+
+        };
+
+        //上传用户头像
+        $(function () {
+            $("#uploaduserpic").click(function () {
+                var option = {
+                    type: 'post',
+                    url: 'http://139.196.192.14/upload/web?token=' + $("#hdnToken").val(),
+                    beforeSubmit: function () {
+
+                    },
+                    success: function (result) {
+                        //alert(result);
+
+                        if ($.parseJSON(result).code == 0) {
+                            sessionStorage.setItem("PicUploadedResult", result);
+                            alert("上传成功");
+                            //$('#uploaduserpic').hidden();
+                            $("#header-pic").attr("src", "http://139.196.192.14" + $.parseJSON(result).data);
+                            $(".head-pic>img").attr("src", "http://139.196.192.14" + $.parseJSON(result).data);
+
+                        } else {
+                            alert($.parseJSON(result).message);
+                        }
+
+                    },
+                    error: function (result) {
+                        debugger;
+                    }
+                };
+
+                $('#formFileUserPic').ajaxSubmit(option);
+            })
+        });
+
+    </script>
+
+</head>
+<body>
+    <!-- 头部 star -->
+    @{
+
+        UserProfileInfo userProfileInfo = (UserProfileInfo)ViewBag.UserFile;
+        userProfileInfo.avatar = "http://139.196.192.14" + userProfileInfo.avatar;
+
+    }
+    <input type="hidden" value=@ViewBag.Token id="hdnToken" />
+    <input type="hidden" value=@ViewBag.UserID id="userID" />
+    <input type="hidden" value=@ViewBag.HospitalID id="HospitalID" />
+    <input type="hidden" id="removeid" />
+    <div id="top">
+        <div class="col-md-6 col-md-offset-3 col-sm-offset-2  col-sm-8  col-xs-12 ">
+            <div class="col-sm-4 col-xs-3 colorac h4">
+                LOGO
+            </div>
+            <ul class="col-sm-8 col-xs-9 text-right nav_menu">
+                @*
+                    <li class="col-md-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLHome/Index">首页</a></li>*@
+                <li class="col-md-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLProject/ProjectList">项目</a></li>
+                <li class="col-md-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLMessage/MessageIndex?pageType=1">留言板</a><span class="news text-top"></span></li>
+                @if (userProfileInfo.role == "90" || userProfileInfo.role == "80")
+                {
+                    <li class="col-md-2 col-xs-3 pad-w10"><a class="h6 colorac" href="/F8YLManage/ManageIndex">管理</a></li>
+                }
+
+            </ul>
+        </div>
+    </div>
+    <!-- 头部 end -->
+    <!-- 页面内容 star -->
+    <div class="container">
+        <!-- 菜单 star -->
+        <div id="menu" class="text-right margin-t5 ">
+            @*<button class="btn btn-transparent margin-w5" style="line-height: 9px"><img src="../images/icon5.png"></button>*@
+            @{
+                if (Int32.Parse(userProfileInfo.role) >= 20 && Int32.Parse(userProfileInfo.role)!=90)//PI及以上才有权限
+                {
+            <button class="btn btn-transparent margin-w5 colorfe min_btn" data-toggle="modal"
+                    data-target="#new" style="margin-bottom: 10px;">
+                <img class="pad-w5" style="margin-top:-3px" src="../images/icon4.png">新增项目
+            </button>
+            <button id="fileArchive" class="btn btn-transparent margin-w5 colorfe min_btn" data-toggle="modal"
+                    data-target="#manage" style="margin-bottom: 10px;">
+                <img class="pad-w5" style="margin-top:-3px;" src="../images/icon3.png">管理项目
+            </button>
+                }
+            }
+            <button class="btn btn-transparent margin-w5 colorfe min_btn" id="btn_user" style="position:relative;margin-bottom:10px;">
+                <span class="head-pic" style="margin:0;padding:0;position:absolute;left:0;top:0">
+                    <img src="@userProfileInfo.avatar" style="width:35px;height:34px" id="useravatar" />
+                </span>
+                <span class="pad-w5" id="show_username" style="padding-left:35px">@userProfileInfo.username</span>
+            </button>
+        </div>
+        <!-- 菜单 end -->
+        <!-- 页面面板 star -->
+        <!-- 个人中心 -->
+        <div class="col-sm-3 col-md-2 col-lg-1 margin-t10" id="user_settings" style="display:none">
+            <div class="panel panel-default pad-h10" style="min-width: 100px;">
+                <ul class="pad-w20">
+                    <li data-toggle="modal" data-target="#personal_data"><a class="btn_settings">个人设置</a></li>
+                    <li data-toggle="modal" data-target="#change_password"><a class="btn_editpass">修改密码</a></li>
+                    <li class="btn_exit"><a href="javascript:;" style="display:block;">退出</a></li>
+                </ul>
+            </div>
+        </div>
+        <!-- 页面面板 end -->
+        <!-- 页面板块 -->
+        <div class="row">
+            <div class="col-sm-12">
+                <p class="colorfe" style="margin-top:10px;padding-left:15px">我的项目</p>
+                @{
+                    if (Int32.Parse(userProfileInfo.role) >= 20 && Int32.Parse(userProfileInfo.role) != 90)//PI及以上才有权限
+                    {
+                        <div class="col-sm-6 col-md-3 col-lg-3">
+                            <a class="btn btn-lg btn-transparent colorfe thumbnail margin-t10" id="panel" style="line-height: 6" data-toggle="modal"
+                               data-target="#new">
+                                新增项目
+                            </a>
+                        </div>
+                    }
+                }
+
+                @if (ViewBag.ProjectList != null)
+                {
+                    foreach (JoinedProjectEntity pItem in (List<JoinedProjectEntity>
+                        )ViewBag.ProjectList)
+                    {
+                        <div class="col-sm-6 col-md-3 col-lg-3">
+                            <a class="btn btn-lg btn-transparent colorfe thumbnail margin-t10 padel" id="panel" name="@pItem.userid" href="/F8YLProject/ProjectDetail?id=@pItem.id">
+                                <div class="col-xs-6 text-left">
+                                    <p class="color333 h5">@pItem.name</p>
+                                    <p class="color666 h6" style="line-height: 1.6">
+                                        @pItem.opendate<br>
+                                        目标入组数 @pItem.num_goal<br>
+                                        已入组数    @pItem.num_patient
+                                    </p>
+                                </div>
+                                @{
+
+                        var percentage = 0;
+                        if (pItem.num_goal != "0")
+                        {
+                            percentage = (int.Parse(pItem.num_patient) / int.Parse(pItem.num_goal)) * 100;
+                        }
+
+                                }
+                                <div class="col-xs-6">
+                                    <div class="progress-round">
+                                        <div class="progress-round">
+                                            <div class="pie_progress" role="progressbar" data-goal="100" data-barcolor="#3daf2c" data-barsize="10" aria-valuenow="0" data-value="@percentage%" aria-valuemin="0" aria-valuemax="100">
+                                                <p class="h6 color666 pad-t30" style="margin:0">进度</p>
+                                                <span class="h5 color-rate">@percentage%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                            <!-- 管理归档 -->
+                            @{
+                        if (Session["CurrentUserID"].ToString() == pItem.userid)
+                        {
+                            if (Int32.Parse(userProfileInfo.role) >= 20)//PI及以上才有权限
+                            {
+                                <a href="javascript:;" class="yyy" style="position:absolute;top:10px;right:22px;" data-toggle="modal" data-target="#archive_projects" name="@pItem.id">
+                                    <img src="../images/icon6.png">
+                                </a>
+                            }
+                        }
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        <!-- 弹框 -->
+        <!-- 修改密码 -->
+        <div class="modal fade" id="change_password" tabindex="-1" role="dialog"
+             aria-labelledby="myModalLabel" aria-hidden="true" style="z-index:9999">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close"
+                                data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="myModalLabel">
+                            修改密码
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="password" class="form-control" placeholder="当前密码" id="passold">
+                        <input type="password" class="form-control margin-h10" placeholder="新密码" id="passnew1">
+                        <input type="password" class="form-control margin-h10" placeholder="再次输入新密码" id="passnew2">
+                    </div>
+                    <div class="modal-footer" style="text-align: left">
+                        <button type="button" class="btn btn-default pad-w20 btn_cp_save" data-dismiss="modal">保存</button>
+                        <button type="button" class="btn btn-default pad-w20 btn_cp_cancel"
+                                data-dismiss="modal" aria-hidden="true">
+                            取消
+                        </button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal -->
+        </div>
+        <!-- 个人资料 -->
+        <div class="modal fade" id="personal_data" tabindex="-1" role="dialog"
+             aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close"
+                                data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="myModalLabel">
+                            个人资料
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-horizontal" role="form">
+                            <div class="form-group">
+                                <label for="" class="col-sm-2" style="line-height: 3">头像</label>
+                                <div class="col-sm-10">
+                                    <span class="head-pic-md middle"><img id="header-pic" style="width:50px;height:50px" src="@userProfileInfo.avatar" /></span>
+                                    <form action='' method='post' enctype='multipart/form-data' id="formFileUserPic">
+                                        <input type="file" class="btn btn-info btn_upload" style="cursor: pointer;" onchange="javascript:$('#uploaduserpic').show();" name="Filedata" placeholder="点击上传头像">
+                                    </form>
+                                    <input type="button" value="上传" id="uploaduserpic" class="btn btn-success">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">姓名</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="username" value="@userProfileInfo.username">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">科室</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="dept" value="@userProfileInfo.deptname">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">职称</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="jobtitle" value="@userProfileInfo.duty">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">手机</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="mobilephone" value="@userProfileInfo.mobile" readonly="readonly">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">电话</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="telphone" value="@userProfileInfo.tel">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">身份证</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="idcard" value="@userProfileInfo.idcard">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">邮箱</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="email" value="@userProfileInfo.email">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="" class="col-sm-2">医院名称</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="hospitalname" value="@userProfileInfo.hospital.title" readonly="readonly">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="text-align: left">
+                        <button type="button" class="btn btn-default btn_pd_save">保存</button>
+                        <button type="button" data-dismiss="modal" class="btn btn-default margin-w5 btn_cancel" aria-hidden="true">
+                            取消
+                        </button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal -->
+        </div>
+        <!-- 归档项目弹框 -->
+        <div class="modal fade" id="archive_projects" tabindex="-1" role="dialog"
+             aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close"
+                                data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="myModalLabel">
+                            归档项目
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        归档项目后将无法对其进行修改，<br>
+                        确认要归档吗?
+                    </div>
+                    <input type="hidden" id="hiddenid" />
+                    <div class="modal-footer" style="text-align: left">
+                        <button type="button" class="btn btn-danger"
+                                data-dismiss="modal" id="filearchiving">
+                            归档
+                        </button>
+                        <button type="button" class="btn btn-default"
+                                data-dismiss="modal">
+                            取消
+                        </button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal -->
+        </div>
+        <!-- 管理项目弹框 -->
+        <div class="modal fade" id="manage" tabindex="-1" role="dialog"
+             aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close"
+                                data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="myModalLabel">
+                            管理归档
+                        </h4>
+                    </div>
+                    <div class="modal-body" id="filelist">
+                        <hr style="margin:0">
+                        @*<span class="col-xs-9  margin-t10">项目名称</span>
+                            <a href="" class="col-xs-3 text-right  margin-t10">激活项目</a>
+                            <span class="col-xs-9  margin-t10">项目名称</span>
+                            <a href="" class="col-xs-3 text-right  margin-t10">激活项目</a>
+                            <span class="col-xs-9  margin-t10">项目名称</span>
+                            <a href="" class="col-xs-3 text-right  margin-t10">激活项目</a>
+                            <span class="col-xs-9  margin-t10">项目名称</span>
+                            <a href="" class="col-xs-3 text-right  margin-t10">激活项目</a>*@
+                    </div>
+                    <div class="modal-footer" style="text-align: left">
+                        <button type="button" class="btn btn-default"
+                                data-dismiss="modal">
+                            关闭
+                        </button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal -->
+        </div>
+        <!-- 新增项目弹框 -->
+        <div class="modal fade" id="new" tabindex="-1" role="dialog"
+             aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close"
+                                data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="myModalLabel">
+                            新建项目
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <hr style="margin:0">
+                        <input id="projectName" type="text" class="form-control" placeholder="请输入项目名称">
+                    </div>
+                    <div class="modal-footer" style="text-align: left">
+                        <button id="createProject" type="button" class="btn btn-default"
+                                data-dismiss="modal" onclick="createNewProject()">
+                            确定
+                        </button>
+                        <button type="button" class="btn btn-default"
+                                data-dismiss="modal">
+                            取消
+                        </button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal -->
+        </div>
+    </div>
+    <!-- 页面内容 end -->
+    <!-- 弹出框背景 -->
+    <div class="modalsBg" style="display: none;"></div>
+    <script src="../js/jquery-asPieProgress.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            // aria-valuenow="50" 为当前进度值
+            //项目进度
+            $(".pie_progress").asPieProgress({
+                namespace: 'pie_progress'
+            });
+            $(".pie_progress").each(function () {
+                var val = $(this).attr("data-value");
+                $(this).asPieProgress('go', val);
+            })
+            //个人管理
+            $("#btn_user").click(function () {
+                var show = $("#user_settings").css("display");
+                if (show == "none")
+                    $("#user_settings").css("display", "block");
+                else
+                    $("#user_settings").css("display", "none");
+            })
+            $(".btn_settings").click(function () {
+                $.ajax({
+                    url: "/F8YLUCenter/GetUserInfo?userid=@userProfileInfo.id",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            $("#hidden-userid").val("");
+                            $("#username").val(retData.data.username);
+                            $("#dept").val(retData.data.deptname);
+                            $("#jobtitle").val(retData.data.duty);
+                            $("#mobilephone").val(retData.data.mobile);
+                            $("#telphone").val(retData.data.tel);
+                            $("#idcard").val(retData.data.idcard);
+                            $("#email").val(retData.data.email); 
+                            $("#hospitalname").val(retData.data.hospital.title);
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                })
+            })
+
+            //获取项目归档列表
+            $("#fileArchive").click(function () {
+                $.ajax({
+                    url: "/F8YLProject/getprojectList?projectId=" + $("#hiddenid").val() + "&hospitalId=" + $("#HospitalID").val() + "&userId=" + $("#userID").val(),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            var strhtml = $("#filelist").html();
+
+                            $.each(retData.data.data, function (i, item) {
+                                strhtml += "<div id=\"" + item.name + "\"><span class=\"col-xs-9  margin-t10\">" + item.name + "</span><a href=\"#\" class=\"col-xs-3 text-right  margin-t10\" name=\"" + item.id + "\">激活项目</a></div>"
+                            })
+                            $("#filelist").html(strhtml);
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e.message);
+                    }
+
+                })
+            })
+
+            //激活项目
+            $(document).on("click", "#filelist a", function () {
+                //alert($(this).attr("name"));
+                $("#removeid").val($(this).attr("name"));
+                $.ajax({
+                    url: "/F8YLProject/projectInvoke?projectId=" + $(this).attr("name"),
+                    type: "GET",
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            alert(retData.data);
+                            var ycname = $("#removeid").val();
+                            $("#manage div").remove("div[id='" + ycname + "']");
+
+                            window.location.href = '/F8YLProject/ProjectList';
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+
+                    }
+
+                })
+            })
+
+        });
+
+        //权限控制
+        $(function () {
+            var userRole = "@userProfileInfo.role";
+
+            if (userRole == "-10") {
+                //病人
+                $("div#top ul.text-right li:eq(2)").hide();
+            }
+
+        })
+    </script>
+
+</body>
+</html>

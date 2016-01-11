@@ -1,0 +1,224 @@
+﻿@model F8YL.Model.HospitalEntity
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Delete</title>
+</head>
+<body>
+    <h3>Are you sure you want to delete this?</h3>
+    <div>
+        <h4>HospitalEntity</h4>
+        <hr />
+        <dl class="dl-horizontal">
+            <dt>
+                @Html.DisplayNameFor(model => model.adminid)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.adminid)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.title)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.title)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.type)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.type)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.logo)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.logo)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.lisence)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.lisence)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.provid)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.provid)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.cityid)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.cityid)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.areaid)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.areaid)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.address)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.address)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.enabled)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.enabled)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.level)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.level)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.ll)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.ll)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.keywords)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.keywords)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.features)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.features)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.tags)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.tags)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.services)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.services)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.contact)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.contact)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.telphone)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.telphone)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.mobile)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.mobile)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.im)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.im)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.status)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.status)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.ctime)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.ctime)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.utime)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.utime)
+            </dd>
+    
+            <dt>
+                @Html.DisplayNameFor(model => model.atime)
+            </dt>
+    
+            <dd>
+                @Html.DisplayFor(model => model.atime)
+            </dd>
+    
+        </dl>
+    
+        @using (Html.BeginForm()) {
+            @Html.AntiForgeryToken()
+    
+            <div class="form-actions no-color">
+                <input type="submit" value="Delete" class="btn btn-default" /> |
+                @Html.ActionLink("Back to List", "Index")
+            </div>
+        }
+    </div>
+</body>
+</html>

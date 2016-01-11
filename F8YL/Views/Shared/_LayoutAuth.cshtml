@@ -1,0 +1,78 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta content="yes" name="apple-mobile-web-app-capable" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
+    <title>@ViewBag.Title</title>
+    <link rel="stylesheet" type="text/css" href="~/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="~/css/bootstrap-extend.min.css">
+    <link rel="stylesheet" type="text/css" href="~/css/base.css">
+    <link rel="stylesheet" type="text/css" href="~/css/layout.css">
+    <link rel="stylesheet" type="text/css" href="~/css/index.css">
+    <script src="~/js/jquery-1.11.3.min.js"></script>
+    <script src="~/js/bootstrap.min.js"></script>
+    <script src="~/Scripts/jquery.validate.js"></script>
+    <script src="~/Scripts/jquery.validate.unobtrusive.js"></script>
+</head>
+<body>
+    <div class="row margin-h10 header">
+        <div class="col-xs-6 cCenter">LOGO</div>
+        <div class="col-xs-6 cCenter">
+            <a href="#">首页</a>
+            <button type="button" class="btn btn-primary btn-xs margin-w20 btn_login">登录</button>
+        </div>
+    </div>
+    <div class="index-text">
+        <h1 class="color333 cCenter">临床医患交互平台</h1>
+        <h2 class="cCenter margin-h10" style="color: #888;">方便科研指标统计和术后录入</h2>
+    </div>
+    @RenderBody()
+    <!-- 弹出框背景 -->
+    <div class="modalsBg" style="display: none;"></div>
+    <script>
+        $(function () {
+            //点击登录
+            $(".btn_login").click(function () {
+                var display = $(".login-box").css("display");
+                $(".login-box").css("display", "block");
+                $(".modalsBg").css("display", "block");
+                $(".login-box").removeClass("fadeInUp animated-500");
+                $(".login-box").addClass("fadeInDown animated-500");
+            })
+            $(".btn_forget").click(function () {
+                $(".login-in").css("display", "none");
+                $(".forget-pass").css("display", "block");
+            })
+            $(".btn_back").click(function () {
+                $(".login-in").css("display", "block");
+                $(".forget-pass").css("display", "none");
+            })
+            //关闭弹出框
+            $(".close,.modalsBg").click(function () {
+                close();
+            })
+            //esc键关闭弹出框
+            $(document).keyup(function (event) {
+                switch (event.keyCode) {
+                    case 27:
+                        close();
+                    case 96:
+                        close();
+                }
+            });
+            //关闭弹出框公用方法
+            function close() {
+                $(".login-box").removeClass("fadeInDown animated-500");
+                $(".login-box").addClass("fadeInUp animated-500");
+                setTimeout(function () {
+                    $(".modalsBg").css("display", "none");
+                    $(".login-box").css("display", "none");
+                }, 500);
+            }
+        })
+    </script>
+</body>
+</html>

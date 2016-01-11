@@ -1,0 +1,1003 @@
+﻿body {
+    background-image: url(../images/bg1.jpg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+    background-color: #464646;
+    font: 14px/1.5 Arial,'Microsoft YaHei',Verdana,"\5b8b\4f53",sans-serif;
+}
+
+a {
+    color: #333;
+    text-decoration: none;
+}
+
+    a:hover,
+    a:focus {
+        color: none;
+        text-decoration: none;
+    }
+
+.btn-transparent:hover, .btn-transparent:focus, .btn-transparent.focus {
+    color: #fff;
+}
+
+.form-control[disabled], .form-control[readonly], fieldset[disabled] .form-control {
+    background-color: #fbf9f9;
+    color: #333;
+    cursor: pointer;
+}
+
+.news {
+    right: 0;
+}
+
+.modal-body {
+    min-height: 80px;
+    height: auto;
+    overflow: hidden;
+}
+
+.btn-lg {
+    height: 105px;
+}
+/*项目进度*/
+.progress-round {
+    background: none;
+    height: 110px;
+    position: relative;
+}
+
+.pie_progress {
+    position: relative;
+    margin-right: auto;
+    margin-left: auto;
+    text-align: center;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    max-width: 75px;
+    margin: 0 auto;
+    top: 17px;
+    min-height: 80px;
+}
+
+.color-rate {
+    position: absolute;
+    top: 38px;
+    left: 0px;
+    width: 100%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.pad-t30 {
+    position: absolute;
+    top: 10px;
+    left: 0px;
+    width: 100%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+/*新增项目*/
+.illness li, .choose-patient li {
+    cursor: pointer;
+}
+
+.penal-hospitals, .choose-hospitals, .choose-member, .tab_Doctor, .tab_Patient, .move_to_doctor {
+    position: absolute;
+    top: 85px;
+    right: 0;
+    z-index: 8;
+}
+
+    .choose-hospitals .panel, .choose-member .panel {
+        box-shadow: 0px 0px 10px rgba(0,0,0,.5);
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+.choose-p2-hospitals {
+    position: absolute;
+    top: 185px;
+    left: 30%;
+    z-index: 9;
+}
+
+    .choose-p2-hospitals .panel {
+        box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+        -webkit-box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+        -moz-box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+    }
+
+#join_hospitals_pi .modal-dialog {
+    width: 350px;
+    margin-top: 20%;
+    margin-left: 55%;
+}
+
+.tab_one span {
+    cursor: pointer;
+}
+
+.choose-doctor {
+    position: absolute;
+    top: 85px;
+    right: 25%;
+    z-index: 9;
+    display: none;
+}
+
+    .choose-doctor .panel {
+        box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+        -webkit-box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+        -moz-box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+    }
+
+#modal_Doctor .modal-dialog {
+    max-width: 350px;
+    z-index: 1051;
+}
+
+.patient_members, .hospital_members {
+    max-height: 250px;
+    padding: 0;
+    overflow: hidden;
+    overflow-y: auto;
+}
+
+    .patient_members li, .hospital_members li {
+        cursor: pointer;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+/*患者资料，公告*/
+.left-nav {
+    max-height: 700px;
+    overflow-y: auto;
+    padding-bottom: 50px;
+}
+
+.message {
+    height: 100%;
+    padding: 0;
+    overflow-y: auto;
+    padding-bottom: 40px;
+}
+
+.btn-development {
+    position: fixed;
+    bottom: 0;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+}
+
+.message-content {
+    border-left: 1px solid #ccc;
+    margin-left: -1px;
+}
+
+.message-line.current .txt_name, .NoticeList.current .txt_name {
+    color: #428bca;
+}
+
+.message-line .txt_name, .NoticeList .txt_name {
+    color: #666;
+}
+
+.new_tip li {
+    cursor: pointer;
+    color: #999;
+}
+
+.choice_patient {
+    max-height: 350px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+    .choice_patient li {
+        position: relative;
+        cursor: pointer;
+        margin-bottom: 10px;
+        padding: 15px 10px 15px 10px;
+    }
+
+        .choice_patient li.hover {
+            background-color: #cce3ec;
+            border-radius: 3px;
+            -webkit-border-radius: 3px;
+            -moz-border-radius: 3px;
+            -ms-border-radius: 3px;
+            -o-border-radius: 3px;
+        }
+
+        .choice_patient li.choice i {
+            background: url(../images/widget_check_s.png) no-repeat;
+            background-size: 40px 40px;
+        }
+
+        .choice_patient li i {
+            position: absolute;
+            right: 5px;
+            top: 3px;
+            width: 40px;
+            height: 40px;
+            background: url(../images/widget_check_e.png) no-repeat;
+            background-size: 40px 40px;
+            margin-top: 3px;
+        }
+
+.left-message, .right-message {
+    text-align: left;
+}
+
+.Patient_template li, .tab1-list li, .tab3-list p {
+    cursor: pointer;
+}
+
+    .tab1-list li.active, .tab1-list li:hover {
+        color: #428bca;
+        background: url(../images/icon36.png) no-repeat 4px 19px;
+    }
+
+.temp-panel .txt_name {
+    margin-left: -5px;
+    min-width: 120px;
+}
+
+.temp-panel .txt_Num {
+    width: 80px;
+    padding: 0 5px;
+}
+
+.temp-panel .txt_minNum, .temp-panel .txt_maxNum {
+    padding: 0 10px;
+}
+
+.message-box {
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+.date-list {
+    overflow: hidden;
+    padding-bottom: 20px;
+}
+
+    .date-list ul {
+        overflow: hidden;
+        padding: 0;
+        padding-left: 0px;
+        margin-bottom: 0;
+    }
+
+        .date-list ul li {
+            float: left;
+            width: 80px;
+            padding-bottom: 10px;
+            text-align: center;
+            padding: 5px 0;
+            margin-right: 5px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+            .date-list ul li.active {
+                background-color: #cce3ec;
+                border-radius: 3px;
+                -webkit-border-radius: 3px;
+                -moz-border-radius: 3px;
+            }
+
+                .date-list ul li.active a {
+                    color: #fff;
+                }
+
+            .date-list ul li a {
+                color: #428bca;
+            }
+
+                .date-list ul li a:hover {
+                    color: red;
+                }
+
+.send-message-box {
+    margin-bottom: 30px;
+}
+
+#nm-name {
+    cursor: pointer;
+}
+
+    #nm-name.cur {
+        line-height: 30px;
+        text-align: center;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        display: block;
+        cursor: pointer;
+    }
+
+.text-right li a {
+    color: #fff;
+}
+
+    .text-right li a:hover {
+        color: red;
+    }
+
+.example-wrap .example {
+    margin-top: 8px;
+}
+
+.medical-record {
+    padding: 5px 10px;
+}
+/*管理*/
+.tab1-1, .tab1-2, .tab3, .tab5, .tab8, .tab9, .tab11, .tab12 {
+    display: none;
+}
+
+.tab1 {
+}
+
+.tab2 {
+    position: initial;
+}
+
+.tab2-1, .tab2-2, .tab2-3, .tab2-4 {
+    display: none;
+}
+
+.tab1-1, .tab2-1, .tab2-2, .tab2-3, .tab2-4 {
+    position: absolute;
+    left: 10px;
+    box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+    -webkit-box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+    -moz-box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+}
+
+.tab2-4 {
+    min-width: 500px;
+    width: auto;
+}
+
+.tab4-2 {
+    display: none;
+}
+
+.tab3 {
+    right: 150px;
+    position: absolute;
+}
+
+.tab5 {
+    left: 30%;
+    position: absolute;
+}
+
+.tab7 {
+    position: initial;
+}
+
+.tab9 {
+    position: absolute;
+    right: 100px;
+}
+
+.tab7-1, .tab7-3 {
+    display: none;
+}
+/*author:nothing*/
+
+.tab7-2, .tab7-3 {
+    display: none;
+}
+/*author:nothing*/
+
+
+.tab10 {
+    position: initial;
+}
+
+.tab10-1, .tab10-2, .tab10-3, .tab10-4 {
+    display: none;
+    position: absolute;
+}
+
+.tab10-1 {
+    min-width: 350px;
+    left: 10px;
+}
+
+.tab10-3, .tab10-4 {
+    min-width: 250px;
+    z-index: 9;
+    box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+    -webkit-box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+    -moz-box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+}
+
+.tab12 {
+    display: none;
+}
+
+.pad-w20 li {
+    cursor: pointer;
+    padding: 5px 0;
+}
+
+.penal-manage {
+    padding: 0;
+}
+
+    .penal-manage li {
+        cursor: pointer;
+        padding: 8px 0;
+        padding-left: 20px;
+    }
+
+        .penal-manage li:hover {
+            background-color: #dbecfb;
+        }
+
+.partake-hospitals li {
+    padding-left: 35px;
+}
+
+.power-line {
+    min-width: 200px;
+}
+
+    .power-line li, .hospital-line li {
+        cursor: pointer;
+    }
+
+.hospital {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+    .hospital li {
+        padding: 10px 0 10px 24px;
+    }
+
+.g-upload-file {
+    margin-right: 70px;
+    position: relative;
+}
+
+    .g-upload-file .txt-file {
+        height: 34px;
+        border: 1px solid #cdcdcd;
+        width: 80%;
+    }
+    /*author:nothing*/
+
+    .g-upload-file .btn-file {
+        background-color: #FFF;
+        border: 1px solid #CDCDCD;
+        height: 34px;
+        width: 70px;
+        top: 0px;
+        position: relative;
+    }
+    /*author:nothing*/
+
+    .g-upload-file .btn-file2 {
+        opacity: 0;
+        position: absolute;
+        top: 0;
+    }
+
+#formFileUserPic, #formFilePic {
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    height: 55px;
+    width: 55px;
+}
+
+    #formFileUserPic .btn_upload, #formFilePic .btn_upload {
+        margin: 0;
+        padding: 0;
+        width: 55px;
+        height: 55px;
+        cursor: pointer;
+    }
+
+#uploaduserpic, #uploadpic {
+    margin-left: 10px;
+    display: none;
+}
+
+input[type=file] {
+    cursor: pointer;
+}
+
+.template-classify {
+    background-color: #fff;
+    border-radius: 5px;
+    max-height: 600px;
+    overflow-y: auto;
+    border-top: 1px solid #ccc;
+    border: 1px solid #ccc;
+}
+
+.template-loading {
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+}
+
+    .template-loading h3 {
+        font-size: 18px;
+    }
+/*个人设置*/
+.text-hides {
+    display: inline-block;
+    width: 90px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#data {
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-block;
+    width: 90px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    position: relative;
+    top: 8px;
+}
+
+.head-pic {
+    /*height: 24px;*/
+    margin-left: -15px;
+}
+
+    .head-pic img {
+        border-top-left-radius: 5px;
+        border-bottom-left-radius: 5px;
+        height: 100%;
+        width: 100%;
+    }
+
+#user_settings {
+    width: 180px;
+    position: absolute;
+    top: 85px;
+    right: 35px;
+    z-index: 9;
+}
+
+    #user_settings .panel {
+        box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+    }
+
+    #user_settings ul {
+        padding: 0;
+        padding-top: 5px;
+    }
+
+        #user_settings ul li {
+            cursor: pointer;
+            text-align: center;
+        }
+
+            #user_settings ul li:hover {
+                background-color: rgba(0,0,0,0.08);
+            }
+
+    #user_settings a {
+        color: #333;
+        line-height: 32px;
+    }
+
+#change_password {
+    position: absolute;
+    top: 85px;
+    z-index: 99;
+}
+
+    #change_password .panel {
+        box-shadow: 0px 0px 5px rgba(0,0,0,.5);
+    }
+
+.add_patient_data {
+    z-index: 9999;
+    position: fixed;
+    top: 10%;
+    left: 50%;
+    margin-left: -20.8%;
+    display: none;
+}
+/*首页*/
+#pageContain {
+    overflow: hidden;
+}
+
+.page {
+    display: none;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.contain {
+    width: 100%;
+    height: 100%;
+    display: none;
+    position: relative;
+    z-index: 0;
+}
+
+.current .contain, .slide .contain {
+    display: block;
+}
+
+.current {
+    display: block;
+    z-index: 1;
+}
+
+.slide {
+    display: block;
+    z-index: 2;
+}
+
+.swipe {
+    display: block;
+    z-index: 3;
+    transition-duration: 0ms !important;
+    -webkit-transition-duration: 0ms !important;
+}
+
+.page1 {
+    background-image: url(../images/bg2.jpg);
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.page2 {
+    background-image: url(../images/bg4.jpg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.page3 {
+    background-image: url(../images/bg5.jpg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.page4 {
+    background-image: url(../images/bg6.jpg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.page5 {
+    background-image: url(../images/bg3.jpg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+#navBar {
+    z-index: 3;
+    position: absolute;
+    top: 30%;
+    right: 3%;
+}
+
+    #navBar .active {
+        /*background: #ccc;*/
+    }
+
+    #navBar li {
+        width: 12px;
+        height: 12px;
+        margin: 14px 7px;
+        position: relative;
+    }
+
+        #navBar li a span {
+            border-radius: 50%;
+            height: 8px;
+            left: 5px;
+            position: absolute;
+            top: 3px;
+            -webkit-transition: all 0.4s ease;
+            -o-transition: all 0.4s ease;
+            transition: all 0.4s ease;
+            width: 8px;
+            z-index: 1;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        #navBar li.active a span {
+            background: #fff;
+            height: 12px;
+            left: 3px;
+            top: 0;
+            width: 12px;
+        }
+
+.header {
+    margin-right: 0;
+}
+
+.login-header {
+    padding: 60px 0;
+}
+
+.logo {
+    width: 100px;
+    height: 100px;
+    border-radius: 100px;
+    background-color: #cce3ec;
+    display: inline-block;
+    position: relative;
+    z-index: 10;
+    text-indent: -9999px;
+    text-align: center;
+    margin: 30px 0;
+}
+
+.tc {
+    text-align: center;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 13px;
+}
+
+.login-tel {
+    background: url(../images/icon32.png) no-repeat 10px center;
+}
+
+.login-password, .login-tel {
+    padding-left: 40px;
+    border: 1px solid #a2bed0;
+    height: 42px;
+}
+
+.login-password {
+    background: url(../images/icon31.png) no-repeat 10px center;
+}
+
+.index-text {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    top: 77%;
+}
+/*弹出框*/
+.login-box {
+    z-index: 9999;
+    position: fixed;
+    left: 37.5%;
+    width: 25%;
+    min-width: 420px;
+}
+
+.modalsBg {
+    display: none;
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    background: rgba(255,255,255,0.2);
+    top: 0;
+    left: 0;
+    z-index: 8;
+}
+
+.animated {
+    -webkit-animation-duration: 1s;
+    animation-duration: 1s;
+    -webkit-animation-fill-mode: both;
+    animation-fill-mode: both;
+}
+
+.animated-500 {
+    -webkit-animation-duration: 500ms;
+    animation-duration: 500ms;
+    -webkit-animation-fill-mode: both;
+    animation-fill-mode: both;
+}
+
+.fadeInDown {
+    -webkit-animation-name: fadeInDown;
+    animation-name: fadeInDown;
+}
+
+@-webkit-keyframes fadeInDown {
+    0% {
+        opacity: 0;
+        -webkit-transform: translateY(-20px);
+        transform: translateY(-20px);
+    }
+
+    100% {
+        opacity: 1;
+        -webkit-transform: translateY(0);
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    0% {
+        opacity: 0;
+        -webkit-transform: translateY(-20px);
+        -ms-transform: translateY(-20px);
+        transform: translateY(-20px);
+    }
+
+    100% {
+        opacity: 1;
+        -webkit-transform: translateY(0);
+        -ms-transform: translateY(0);
+        transform: translateY(0);
+    }
+}
+
+.fadeInUp {
+    -webkit-animation-name: fadeInUp;
+    animation-name: fadeInUp;
+}
+
+@-webkit-keyframes fadeInUp {
+    0% {
+        opacity: 1;
+        -webkit-transform: translateY(0px);
+        transform: translateY(0px);
+    }
+
+    100% {
+        opacity: 0;
+        -webkit-transform: translateY(-20px);
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes fadeInUp {
+    0% {
+        opacity: 1;
+        -webkit-transform: translateY(0px);
+        -ms-transform: translateY(0px);
+        transform: translateY(0px);
+    }
+
+    100% {
+        opacity: 0;
+        -webkit-transform: translateY(-20px);
+        -ms-transform: translateY(-20px);
+        transform: translateY(-20px);
+    }
+}
+
+.row {
+    margin: 0;
+}
+
+
+
+@media only screen and (max-width:768px) {
+    .choose-member {
+        width: 420px;
+    }
+
+    .text-hides {
+        width: 60px;
+    }
+
+    .left-nav {
+        max-height: 200px;
+        overflow-y: auto;
+        padding-bottom: 50px;
+    }
+
+    .tab4-2 {
+        position: initial;
+        left: auto;
+        width: auto;
+    }
+    /*author:nothing*/
+
+    .tab7-1, .tab7-2, .tab7-3 {
+        position: initial;
+        left: auto;
+        width: auto;
+    }
+
+    .tab12 {
+        padding: 0;
+        margin: 0;
+        padding-bottom: 20px;
+    }
+
+    .NoticeList {
+        padding-right: 0;
+        padding-left: 0;
+    }
+}
+
+
+
+@media screen and ( max-width : 600px) {
+    .choose-member {
+        width: 370px;
+    }
+
+    .g-upload-file .txt-file {
+        width: 60%;
+    }
+}
+/*author:nothing*/
+
+@media screen and ( max-width : 390px) {
+    .nav_menu {
+        padding-right: 0;
+    }
+
+    .choose-member {
+        width: 340px;
+    }
+
+    .min_btn {
+        padding: 6px 4px;
+    }
+
+    .g-upload-file .txt-file {
+        width: 60%;
+    }
+}
+/*author:nothing*/
+
+
+@media screen and ( max-width : 360px) {
+    .choose-member {
+        width: 300px;
+    }
+
+    .g-upload-file .txt-file {
+        width: 50%;
+    }
+}
+
+@media screen and ( max-width : 320px) {
+    .choose-member {
+        width: 300px;
+    }
+
+    .g-upload-file .txt-file {
+        width: 50%;
+    }
+
+    .text-hides {
+        width: 40px;
+    }
+}
+/*author:nothing*/
+

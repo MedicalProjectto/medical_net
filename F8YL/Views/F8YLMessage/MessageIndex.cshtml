@@ -1,0 +1,1958 @@
+﻿@{
+    Layout = null;
+}
+
+@using F8YL.Model;
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta content="yes" name="apple-mobile-web-app-capable" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
+    <title>患者详细资料</title>
+    <!-- bootstrap -->
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-extend.min.css">
+    <!-- 页面样式 -->
+    <link rel="stylesheet" type="text/css" href="../css/base.css">
+    <link rel="stylesheet" type="text/css" href="../css/layout.css">
+    <link href="../css/style.css" rel="stylesheet" />
+    <!-- 上传样式 -->
+    <link href="../css/webuploader.css" rel="stylesheet" />
+    <!-- jQuery -->
+    <script src="../js/jquery-1.11.3.min.js"></script>
+    <script src="../js/jquery.placeholder.min.js"></script>
+    <!-- bootstrap -->
+    <script src="../js/bootstrap.min.js"></script>
+
+    <script src="~/js/uploadfile.js"></script>
+    <script src="~/js/jquery-form.js"></script>
+    @{
+        string patientId = (string)ViewBag.patientId;
+    }
+    <script type="text/javascript">
+
+        $(function () {
+            $('input, textarea').placeholder();
+            var currentkindid = "";
+            var currenttplid = "";
+            var currentperiodid = "";
+            var patientId=@Html.Raw(patientId);
+            var tpldetail = "";
+            $('#NewMessageSend').click(function () {
+
+                var userids = $('#nm-user-id').text();
+                var messageContext = $('#messageContextArea').val();
+                if (messageContext ==""){
+                    alert('消息内容不能为空！');
+                    return;
+                }
+                var datajson = {
+                    "userids": userids, "messageContext": messageContext
+                };
+
+                $.ajax({
+                    url: "/F8YLMessage/SendMessage",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            window.location.href = '/F8YLMessage/MessageIndex';
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+                })
+            });
+
+            $('#BroadcastSend').click(function () {
+
+                var broadcastContext = $('#BroadcastContext').val();
+                if (broadcastContext == ""){
+                    alert('公告内容不能为空！');
+                    return;
+                }
+                var datajson = {
+                    "BroadcastContext": broadcastContext
+                };
+
+                $.ajax({
+                    url: "/F8YLMessage/UpdateBroadcast",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            window.location.href = '/F8YLMessage/MessageIndex';
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+                })
+
+            });
+
+            $('#NewBroadcastSend').click(function () {
+
+                var newBroadcastLabel = $('#NewBroadcastLabel').val();
+                var newBroadcastContext = $('#NewBroadcastContext').val();
+                if (newBroadcastLabel == "" || newBroadcastContext == ""){
+                    alert('公告标题或者公告内容不能为空！');
+                    return;
+                }
+
+                var currentUserRole = $('#CurrentUserRole').val();
+                var newBroadcastProjectList = "";
+                $('#newBroadcastProjectListCheckBoxList input[type="checkbox"]:checked').each(function () {
+                    //alert($(this).attr("id"));
+                    //if ($(this).attr("checked") == "true") {
+                    newBroadcastProjectList = newBroadcastProjectList + $(this).val() + ',';
+                    // }
+                })
+
+                if (currentUserRole == "90" || newBroadcastProjectList != "") {
+                    newBroadcastProjectList = newBroadcastProjectList.substring(0, newBroadcastProjectList.length - 1);
+                    var datajson = {
+                        "newBroadcastLabel": newBroadcastLabel, "newBroadcastContext": newBroadcastContext, "newBroadcastProjectList": newBroadcastProjectList, "attachmentUrl": $.trim($("#attachmentfilepath").val())
+                    };
+
+                    $.ajax({
+                        url: "/F8YLMessage/NewBroadcast",
+                        contentType: "application/json; charset=utf-8",
+                        type: "POST",
+                        data: JSON.stringify(datajson),
+                        dataType: "json",
+                        success: function (retData) {
+                            if (retData.code == 0) {
+                                window.location.href = '/F8YLMessage/MessageIndex';
+                            }
+                            else {
+                                alert(retData.message);
+                            }
+                        },
+                        error: function (e) {
+                            alert(e);
+                        }
+                    })
+                } else {
+                    alert('请选择项目!');
+                }
+            });
+
+            $('#tpl10ReportCommit').click(function () {
+                var PeriodID = $('#tpl10Report_PeriodID').val();
+                if (PeriodID == "-1") {
+                    alert('请选择周期');
+                    return;
+                }
+                $.ajax({
+                    url: "/F8YLMessage/GetTplDetail?tplID=10",
+                    type: "Get",
+                    dataType: "json",
+                    success: function (retData) {
+
+                        //alert('Get tpl detail success...');
+
+                        var DetailidsParam = "";
+                        var AnswerParam = "";
+                        $.each(retData.data.tpl_detail, function (i, detail) {
+
+                            if (detail.term.itype == "20") {
+                                var itype20_Val = "";
+                                itype20_Val = $('input:radio[name=' + detail.term.id + ']:checked').val();
+
+                                if (itype20_Val != "") {
+                                    DetailidsParam = DetailidsParam + detail.id + '$';
+                                    AnswerParam = AnswerParam + itype20_Val + '$';
+                                }
+                            }
+
+                            if (detail.term.itype == "10") {
+                                var itype10_Val = "";
+                                var ctlID = "tpl10Detail_Detail_Term_ID" + detail.term.id;
+                                var ctl = $('#' + ctlID);
+                                itype10_Val = ctl.val();
+                                if (itype10_Val != "") {
+                                    DetailidsParam = DetailidsParam + detail.id + '$';
+                                    AnswerParam = AnswerParam + itype10_Val + '$';
+                                }
+                            }
+
+                        });
+
+                        if (DetailidsParam == "") {
+                            return;
+                        } else {
+                            DetailidsParam = DetailidsParam.substring(0, DetailidsParam.length - 1);
+                            AnswerParam = AnswerParam.substring(0, AnswerParam.length - 1);
+                        }
+
+                        var datajson = {
+                            "tplId": "10", "pediodId": PeriodID, "detailids": DetailidsParam, "answers": AnswerParam
+                        };
+                        $.ajax({
+                            url: "/F8YLMessage/CommitTplReport",
+                            contentType: "application/json; charset=utf-8",
+                            type: "POST",
+                            data: JSON.stringify(datajson),
+                            dataType: "json",
+                            success: function (retData) {
+                                if (retData.code == 0) {
+                                    window.location.href = '/F8YLMessage/MessageIndex?pageType=2';
+                                }
+                                else {
+                                    alert(retData.message);
+                                }
+                            },
+                            error: function (e) {
+                                alert(e);
+                            }
+                        })
+
+
+                    },
+                    error: function (e) {
+                        alert(e.message);
+                    }
+                })
+            });
+
+            $('#tpl11ReportCommit').click(function () {
+                var PeriodID = $('#tpl11Report_PeriodID').val();
+
+                if (PeriodID == "-1") {
+                    alert('请选择周期');
+                    return;
+                }
+                $.ajax({
+                    url: "/F8YLMessage/GetTplDetail?tplID=11",
+                    type: "Get",
+                    dataType: "json",
+                    success: function (retData) {
+
+                        //alert('Get tpl detail success...');
+
+                        var DetailidsParam = "";
+                        var AnswerParam = "";
+                        $.each(retData.data.tpl_detail, function (i, detail) {
+
+
+                            var inputVal = "";
+                            var ctlID = "tpl11Detail_Detail_ID" + detail.id;
+                            var ctl = $('#' + ctlID);
+                            inputVal = ctl.val();
+                            if (inputVal != "") {
+                                DetailidsParam = DetailidsParam + detail.id + '$';
+                                AnswerParam = AnswerParam + inputVal + '$';
+                            }
+                        });
+
+                        if (DetailidsParam == "") {
+                            return;
+                        }
+                        else {
+                            DetailidsParam = DetailidsParam.substring(0, DetailidsParam.length - 1);
+                            AnswerParam = AnswerParam.substring(0, AnswerParam.length - 1);
+                        }
+
+                        var datajson = {
+                            "tplId": "11", "pediodId": PeriodID, "detailids": DetailidsParam, "answers": AnswerParam
+                        };
+                        $.ajax({
+                            url: "/F8YLMessage/CommitTplReport",
+                            contentType: "application/json; charset=utf-8",
+                            type: "POST",
+                            data: JSON.stringify(datajson),
+                            dataType: "json",
+                            success: function (retData) {
+                                if (retData.code == 0) {
+                                    window.location.href = '/F8YLMessage/MessageIndex?pageType=2';
+                                }
+                                else {
+                                    alert(retData.message);
+                                }
+                            },
+                            error: function (e) {
+                                alert(e);
+                            }
+                        })
+
+
+                    },
+                    error: function (e) {
+                        alert(e.message);
+                    }
+                })
+            });
+
+            $('#tpl10ReportIDList li').click(function () {
+
+                var periodId = $(this).attr('id');
+                $('#tpl10Report_PeriodID').val(periodId);
+                $.ajax({
+                    url: "/F8YLMessage/GetTplReportDetail?tplId=10&periodId=" + periodId,
+                    type: "Get",
+                    dataType: "json",
+                    success: function (retData) {
+                        debugger;
+                        //alert('Get tpl detail success...');
+                        if (retData.code == 0) {
+                            $.each(retData.data.tpl.tpl_detail, function (i, detail) {
+                                debugger;
+                                ////radio赋值
+                                if (detail.term.itype == "20") {
+                                    debugger;
+                                    $("input[name='" + detail.termid + "'][value='0']").prop("checked", true);
+                                    $.each(retData.data.report.tpl_report_detail, function (j, reportAnswer) {
+                                        debugger;
+                                        if (detail.termid == reportAnswer.termid) {
+                                            $("input[name='" + detail.termid + "'][value='" + reportAnswer.answer + "']").prop("checked", true);
+                                            return false;
+                                        }
+                                    });
+                                }
+
+                                if (detail.term.itype == "10") {
+                                    $.each(retData.data.report.tpl_report_detail, function (k, reportAnswer) {
+
+                                        if (detail.termid == reportAnswer.termid) {
+                                            var itype10_Val = "";
+                                            var ctlID = "tpl10Detail_Detail_Term_ID" + detail.termid;
+                                            $('#' + ctlID).val(reportAnswer.answer);
+                                        }
+                                    });
+
+                                }
+                            });
+                        } else {
+                            $("#tpl10DetailControls :input[type=number]").each(function () {
+                                $(this).val("");
+                            });
+                            $("#tpl10DetailControls :input[name=[''][value='0']]").attr("checked", false);
+
+
+                        }
+                    },
+                    error: function (e) {
+                        alert(e.message);
+                    }
+                })
+            });
+
+            $('#tpl11ReportIDList li').click(function () {
+
+                var periodId = $(this).attr('id');
+                $('#tpl11Report_PeriodID').val(periodId);
+                $.ajax({
+                    url: "/F8YLMessage/GetTplReportDetail?tplId=11&periodId=" + periodId,
+                    type: "Get",
+                    dataType: "json",
+                    success: function (retData) {
+
+                        if (retData.code == 0) {
+                            $.each(retData.data.tpl.tpl_detail, function (l, detail) {
+
+                                var ctlID = "tpl11Detail_Detail_ID" + detail.id;
+                                $('#' + ctlID).val("");
+                                if (detail.term.itype == "10") {
+                                    $.each(retData.data.report.tpl_report_detail, function (m, reportAnswer) {
+
+                                        if (detail.id == reportAnswer.detailid) {
+                                            $('#' + ctlID).val(reportAnswer.answer);
+                                        }
+                                    });
+
+                                }
+                            });
+                        } else {
+                            $("#tpl11DetailControls :input").each(function () {
+                                $(this).val("");
+                            });
+                        }
+                    },
+                    error: function (e) {
+                        alert(e.message);
+                    }
+                })
+            });
+
+            //获取对应kind下的所有模板列表
+            $(".tpl-kind-list>li").click(function () {
+                var kindid = $(this).attr("id");
+                currentkindid = kindid;
+                //alert(currentkindid);
+                $("#tplDetailControls").html("");
+                $(".tpl-kind-list>li").removeClass("active");
+                $(".tpl-report-commit").css("display","none");
+                $(this).addClass("active");
+
+                var datajson = {
+                    "kindid": currentkindid,
+                };
+
+                $.ajax({
+                    url: "/F8YLMessage/GetTplListByKindId",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            //alert(JSON.stringify(retData.data.data));
+                            $("#tplReportPeriodList").html("");//每次切换模板清空
+                            var newhtml = "";
+                            if (retData.data.data != null) {
+                                $.each(retData.data.data, function (i, item) {
+                                    newhtml += "<li class='tpl-detail' id=" + item.id + ">" + item.name + "</li>";
+
+                                });
+                                $(".tpl-kind-list-in").html(newhtml);
+
+
+                                ////TODO 绑定默认第一个明细到右边
+                                //var defauttplid = retData.data.data[0].id;
+                                //alert(JSON.stringify(GetTplDetailById(defauttplid)));
+                                //var tpldetail = JSON.stringify(GetTplDetailById(defauttplid));
+                                //if (tpldetail.data.periods != null) {
+                                //    $.each(tpldetail.data.periods, function (i, item) {
+                                //        periodhtml += "<li id=" + item.id + "><a>" + item.periodname + "</a></li>";
+                                //    })
+
+                                //    $("#tplReportPeriodList").html(periodhtml);
+
+                                //}
+                            }
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                });
+
+
+            })
+
+            //为模板列表中每个模板添加事件
+            $(document).on("click", ".tpl-detail", function () {
+                var tplid = $(this).attr("id");
+
+                currenttplid = tplid;
+                currentperiodid="";
+                $(".tpl-detail").removeClass("active");
+                $(this).addClass("active");
+                //alert(tplid);
+                if (!confirm("请确认报告已保存?")) {
+                    return;
+                }
+
+                $(".tpl-report-commit").css("display","block");
+                var datajson = {
+                    "id": tplid,
+                };
+
+                $.ajax({
+                    url: "/F8YLMessage/GetTplDetail",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            //alert(JSON.stringify(retData.data));
+                            tpldetail = retData;
+                            var periodhtml = "";
+
+                            $("#tplReportPeriodList").html("");//每次切换模板清空
+                            if (retData.data.periods != null) {
+                                alert("请先选择周期再填写报告!")
+                                $.each(retData.data.periods, function (i, item) {
+                                    periodhtml += "<li id=" + item.id + "><a>" + item.periodname + "</a></li>";
+                                })
+
+                                $("#tplReportPeriodList").html(periodhtml);
+
+                                //下面绑定模板下右边的明细控件
+                                DrawTplDetail(retData);
+                            }
+                            else {//没有periods,需要根据patientId和tplid获取病人有没有填写过,填写过就用模板报告明细画,没用填写过就用模板明细画
+
+
+                                var datajson = {
+                                    "tplid": currenttplid,
+                                    "patientid": patientId,
+                                };
+
+                                $.ajax({
+                                    url: "/F8YLMessage/TplReportList",
+                                    contentType: "application/json; charset=utf-8",
+                                    type: "POST",
+                                    data: JSON.stringify(datajson),
+                                    dataType: "json",
+                                    success: function (retData) {
+                                        if (retData.code == 0) {
+                                            //alert(JSON.stringify(retData));
+                                            if (retData.data == "") {
+
+                                                DrawTplDetail(tpldetail);
+
+                                            }
+                                            else {
+                                                var reportid=retData.data.data[0].id;
+                                                //alert("reportid:"+reportid)
+                                                //获取模板报告详情
+                                                var datajson = {
+                                                    "id": reportid,
+                                                };
+
+                                                $.ajax({
+                                                    url: "/F8YLMessage/GetTplReportDetailById",
+                                                    contentType: "application/json; charset=utf-8",
+                                                    type: "POST",
+                                                    data: JSON.stringify(datajson),
+                                                    dataType: "json",
+                                                    success: function (retData) {
+                                                        if (retData.code == 0) {
+                                                            //alert(JSON.stringify(retData.data));
+
+                                                            //下面绑定模板下右边的模板报告明细控件
+                                                            DrawTplReportDetail(retData);
+                                                        }
+                                                        else {
+                                                            alert(retData.message);
+                                                        }
+                                                    },
+                                                    error: function (e) {
+                                                        alert(e);
+                                                    }
+
+                                                });
+                                            }
+                                        }
+                                        else {
+                                            alert(retData.message);
+                                        }
+                                    },
+                                    error: function (e) {
+                                        alert(e);
+                                    }
+
+                                });
+                            }
+
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                });
+
+            })
+
+            //为右上角每期报告增加事件
+            $(document).on("click", "#tplReportPeriodList>li", function () {
+                var periodid = $(this).attr("id");
+                currentperiodid = periodid;
+                //alert("currenttplid:" + currenttplid)
+                //alert("periodid:" + periodid)
+
+                $("#tplReportPeriodList>li").removeClass("active");
+                $(this).addClass("active");
+
+                //获取模板报告详情
+                var datajson = {
+                    "tplId": currenttplid,
+                    "periodId": periodid
+                };
+
+                $.ajax({
+                    url: "/F8YLMessage/GetTplReportDetail",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            //alert(JSON.stringify(retData.data));
+
+                            //下面绑定模板下右边的模板报告明细控件
+                            DrawTplReportDetail(retData);
+
+
+                        }
+                        else {
+                            DrawTplDetail(tpldetail);
+                            //alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+
+                });
+
+            })
+
+            //提交报告
+            $("#tplReportCommit").click(function () {
+                //alert("currenttplid:" + currenttplid);
+                //alert("patientId:" + patientId);
+                if (patientId=="") {
+                    alert("请到项目中选择病人再进行查看报告。");
+                    return;
+                }
+                if (currentperiodid=="") {
+                    currentperiodid=0;
+                }
+                //alert("currentperiodid:" + currentperiodid);
+                var dtlids="";
+                var answers="";
+
+                $("#tplDetailControls input:radio:checked").each(function(i,item){
+                    dtlids+=$(this).attr("id")+ '$';
+                    answers+=$(this).val()+ '$';
+                })
+                $("#tplDetailControls input:text").each(function(i,item){
+                    if ($(this).val()!="") {
+                        dtlids+=$(this).attr("id")+ '$';
+                        answers+=$(this).val()+ '$';
+                    }
+                })
+                $("#tplDetailControls input[type='date']").each(function(i,item){
+                    if ($(this).val()!="") {
+                        dtlids+=$(this).attr("id")+ '$';
+                        answers+=$(this).val()+ '$';
+                    }
+                })
+
+
+
+
+                var len=$("#tplDetailControls input:checkbox:checked").length;
+                if (len>0) {
+                    var tempid=$($("#tplDetailControls input:checkbox:checked")[0]).attr("id");
+                    dtlids+=tempid+ '$';
+                    var tempanswer="";
+
+                    $("#tplDetailControls input:checkbox:checked").each(function(i,item){
+
+                        if (tempid==$(this).attr("id")) {
+
+                            tempanswer+=$(this).val()+',';
+
+                        }
+                        else {
+                            tempid=$(this).attr("id");
+                            tempanswer= tempanswer.substr(0,tempanswer.length-1)+'$'+$(this).val()+','
+                            dtlids+=$(this).attr("id")+ '$';
+
+                        }
+                    })
+                    answers+=tempanswer.substr(0,tempanswer.length-1)+'$';
+
+                }
+
+
+                //alert(dtlids);
+                //alert(answers);
+                if (answers=="") {
+                    alert("请先填值，再提交报告!");
+                    return;
+                }
+
+
+                var datajson = {
+                    "tplId": currenttplid,
+                    "periodid": currentperiodid,
+                    "detailids": dtlids,
+                    "answers": answers,
+                    "patientid":patientId
+                };
+                $.ajax({
+                    url: "/F8YLMessage/CommitTplReport",
+                    contentType: "application/json; charset=utf-8",
+                    type: "POST",
+                    data: JSON.stringify(datajson),
+                    dataType: "json",
+                    success: function (retData) {
+                        if (retData.code == 0) {
+                            alert("报告提交成功！");
+                            //window.location.href = '/F8YLMessage/MessageIndex?pageType=2';
+                        }
+                        else {
+                            alert(retData.message);
+                        }
+                    },
+                    error: function (e) {
+                        alert(e);
+                    }
+                })
+            })
+
+        })
+
+        //retData为模板明细返回值
+        function DrawTplDetail(retData) {
+            var htmlTpl = "";
+            if (retData.data != null) {
+                var tpl = retData.data;
+
+                var type = GetControlType(tpl.tpl_detail[0].term.itype, tpl.tpl_detail[0].term.vtype);
+
+                htmlTpl += "<div class='medical-record'>" + tpl.sharp[tpl.tpl_detail[0].sharpid].name + "</div>";
+                if(tpl.sharp[tpl.tpl_detail[0].sharpid2] != null&&tpl.sharp[tpl.tpl_detail[0].sharpid2] != 0){
+                    htmlTpl += "<div class='medical-record'>" + (tpl.sharp[tpl.tpl_detail[0].sharpid2] != null ? tpl.sharp[tpl.tpl_detail[0].sharpid2].name : "") + "</div>";}
+
+
+                htmlTpl += "<div class='col-sm-12 col-lg-12' style='margin:10px 0;'>";
+                htmlTpl += "<div class='example-wrap'>";
+                htmlTpl += "<span class='example-title'>" + tpl.tpl_detail[0].term.name + "</span>";
+                htmlTpl += "<div class='example'>";
+                if (type == "text" || type == "date") {
+                    htmlTpl += "<input type=" + type + " class='form-control' id="+tpl.tpl_detail[0].id+">";
+                }
+                else {
+
+                    $.each(tpl.tpl_detail[0].term.term_val, function (i, item) {
+                        htmlTpl += "<input type=" + type + " name=" + tpl.tpl_detail[0].id + " id=" + tpl.tpl_detail[0].id + " style='margin-right: 5px;' value=" + item.val + ">" + '<lable for='+tpl.tpl_detail[0].id + ' style="margin-right:10px">'+item.desc+'</lable>';
+                    })
+                }
+                htmlTpl += '</div></div></div>'
+
+                for (var j = 1; j < retData.data.tpl_detail.length; j++) {
+                    var tdtl = retData.data.tpl_detail[j];
+                    type = GetControlType(tdtl.term.itype, tdtl.term.vtype);
+
+                    if (tdtl.sharpid != tpl.tpl_detail[j - 1].sharpid) {   //当前一级模板和前一个一级模板不同
+                        htmlTpl += "<div class='medical-record'>" + tpl.sharp[tdtl.sharpid].name + "</div>";
+                        if(tpl.sharp[tpl.tpl_detail[0].sharpid2] != null&&tpl.sharp[tpl.tpl_detail[0].sharpid2] != 0){
+                            htmlTpl += "<div class='medical-record'>" + (tpl.sharp[tdtl.sharpid2] != null ? tpl.sharp[tdtl.sharpid2].name : "") + "</div>";}
+                        //每个指标
+                        htmlTpl += "<div class='col-sm-12 col-lg-12' style='margin:10px 0;'>";
+                        htmlTpl += "<div class='example-wrap'>";
+                        htmlTpl += "<span class='example-title'>" + tdtl.term.name + "</span>";
+                        htmlTpl += "<div class='example'>";
+                        //htmlTpl += "<input type='text' class='form-control'>";
+                        if (type == "text" || type == "date") {
+                            htmlTpl += "<input type=" + type + " class='form-control' id="+tdtl.id+">";
+                        }
+                        else {
+
+                            $.each(tdtl.term.term_val, function (i, item) {
+                                htmlTpl += "<input type=" + type + " name=" + tdtl.id + " id=" + tdtl.id + " style='margin-right: 5px;' value=" + item.val + ">" + '<lable for='+tpl.tpl_detail[0].id + ' style="margin-right:10px">'+item.desc+'</lable>';
+                            })
+                        }
+
+                        htmlTpl += '</div></div></div>'
+
+
+                    }
+                    else if (tdtl.sharpid == tpl.tpl_detail[j - 1].sharpid && tdtl.sharpid2 == tpl.tpl_detail[j - 1].sharpid2) {   //当前一级模板和二级模板和前一个都相同
+
+                        htmlTpl += "<div class='col-sm-12 col-lg-12' style='margin:10px 0;'>";
+                        htmlTpl += "<div class='example-wrap'>";
+                        htmlTpl += "<span class='example-title'>" + tdtl.term.name + "</span>";
+                        htmlTpl += "<div class='example'>";
+                        if (type == "text" || type == "date") {
+                            htmlTpl += "<input type=" + type + " class='form-control' id="+tdtl.id+">";
+                        }
+                        else {
+
+                            $.each(tdtl.term.term_val, function (i, item) {
+                                htmlTpl += "<input type=" + type + " name=" + tdtl.id + " id=" + tdtl.id + " style='margin-right: 10px;' value=" + item.val + ">" +  '<lable for='+tpl.tpl_detail[0].id + ' style="margin-right:10px">'+item.desc+'</lable>';
+                            })
+                        }
+                        //htmlTpl += "<input type='text' class='form-control'>";
+                        htmlTpl += '</div></div></div>'
+                    }
+                    else {   //当前一级模板和前一个一级模板相同
+
+                        htmlTpl += "<div class='medical-record'>" + (tpl.sharp[tdtl.sharpid2] != null ? tpl.sharp[tdtl.sharpid2].name : "") + "</div>";
+
+                        htmlTpl += "<div class='col-sm-12 col-lg-12' style='margin:10px 0;'>";
+                        htmlTpl += "<div class='example-wrap'>";
+                        htmlTpl += "<span class='example-title'>" + tdtl.term.name + "</span>";
+                        htmlTpl += "<div class='example'>";
+                        if (type == "text" || type == "date") {
+                            htmlTpl += "<input type=" + type + " class='form-control' id="+tdtl.id+">";
+                        }
+                        else {
+
+                            $.each(tdtl.term.term_val, function (i, item) {
+                                htmlTpl += "<input type=" + type + " name=" + tdtl.id + " id=" + tdtl.id + " style='margin-right: 10px;' value=" + item.val + ">" + '<lable for='+tpl.tpl_detail[0].id + ' style="margin-right:10px">'+item.desc+'</lable>';
+                            })
+                        }
+                        //htmlTpl += "<input type='text' class='form-control'>";
+                        htmlTpl += '</div></div></div>'
+                    }
+                }
+                $("#tplDetailControls").html(htmlTpl);
+            }
+        }
+
+        function DrawTplReportDetail(retData) {
+            var htmlTpl = "";
+            if (retData.data != null) {
+                var tpl = retData.data.tpl;
+                var reportdtl = retData.data.report.tpl_report_detail
+
+                var type = GetControlType(tpl.tpl_detail[0].term.itype, tpl.tpl_detail[0].term.vtype);
+
+                htmlTpl += "<div class='medical-record pad-h5 pad-w20'>" + tpl.sharp[tpl.tpl_detail[0].sharpid].name + "</div>";
+                htmlTpl += "<div class='medical-record pad-h5 pad-w20'>" + (tpl.sharp[tpl.tpl_detail[0].sharpid2] != null ? tpl.sharp[tpl.tpl_detail[0].sharpid2].name : "") + "</div>";
+
+
+                htmlTpl += "<div class='form-group'>";
+                htmlTpl += "<label for='' class='pad-w20 margin-t10'>" + tpl.tpl_detail[0].term.name + "</label>";
+                htmlTpl += "<div class='col-sm-10'>";
+                if (type == "text" || type == "date") {
+                    htmlTpl += "<input type=" + type + " class='form-control' id="+tpl.tpl_detail[0].id+" value=" + retData.data.report.tpl_report_detail[tpl.tpl_detail[0].id].answer + ">";
+                }
+                else if (type == "radio") {
+                    $.each(tpl.tpl_detail[0].term.term_val, function (i, item) {
+
+                        if (item.val == reportdtl[tpl.tpl_detail[0].id].answer) {
+                            htmlTpl += "<input type=" + type + " name=" + tpl.tpl_detail[0].id + " style='margin-right: 10px;' id="+tpl.tpl_detail[0].id+" checked='checked' value=" + item.val + ">" + item.desc;
+
+                        }
+                        else {
+                            htmlTpl += "<input type=" + type + " name=" + tpl.tpl_detail[0].id + " style='margin-right: 10px;' id="+tpl.tpl_detail[0].id+" value=" + item.val + ">" + item.desc;
+
+                        }
+                    })
+                }
+                    //else {//checkbox
+                    //    $.each(tpl.tpl_detail[0].term.term_val, function (i, item) {
+
+                    //        htmlTpl += "<input type=" + type + " name=" + tpl.tpl_detail[0].term.id + " style='margin-right: 10px;' id="+tpl.tpl_detail[0].id+" value=" + item.val + ">" + item.desc;
+                    //    })
+                    //}
+                else {//checkbox
+                    var arr=new Array();
+                    arr=reportdtl[tpl.tpl_detail[0].id].answer.split(",");
+
+                    $.each(tpl.tpl_detail[0].term.term_val, function (i, item) {
+
+                        if ($.inArray(item.val,arr)=="-1") {//值不包含在数据中
+                            htmlTpl += "<input type=" + type + " name=" + tpl.tpl_detail[0].id + " style='margin-right: 10px;' id="+tpl.tpl_detail[0].id+" value=" + item.val + ">" + item.desc;
+
+                        }
+                        else {
+                            htmlTpl += "<input type=" + type + " name=" + tpl.tpl_detail[0].id + " style='margin-right: 10px;' id="+tpl.tpl_detail[0].id+" checked='checked' value=" + item.val + ">" + item.desc;
+
+                        }
+                    })
+                }
+                htmlTpl += '</div></div>'
+                var tplreport = retData.data.report.tpl_report_detail;
+
+                for (var j = 1; j < retData.data.tpl.tpl_detail.length; j++) {
+                    var tdtl = retData.data.tpl.tpl_detail[j];
+
+                    type = GetControlType(tdtl.term.itype, tdtl.term.vtype);
+                    var arr=new Array();
+                    arr=reportdtl[tdtl.id].answer.split(",");
+
+                    if (tdtl.sharpid != tpl.tpl_detail[j - 1].sharpid) {   //当前一级模板和前一个一级模板不同
+                        htmlTpl += "<div class='medical-record pad-h5 pad-w20'>" + tpl.sharp[tdtl.sharpid].name + "</div>";
+                        htmlTpl += "<div class='medical-record pad-h5 pad-w20'>" + (tpl.sharp[tdtl.sharpid2] != null ? tpl.sharp[tdtl.sharpid2].name : "") + "</div>";
+                        //每个指标
+                        htmlTpl += "<div class='form-group'>";
+                        htmlTpl += "<label for='' class='pad-w20 margin-t10'>" + tdtl.term.name + "</label>";
+                        htmlTpl += "<div class='col-sm-10'>";
+                        //htmlTpl += "<input type='text' class='form-control'>";
+                        if (type == "text" || type == "date") {
+                            htmlTpl += "<input type=" + type + " class='form-control' id="+tdtl.id+" value=" + tplreport[tdtl.id].answer + ">";
+                        }
+                        else if (type == "radio") {
+                            $.each(tdtl.term.term_val, function (i, item) {
+
+
+                                if (item.val == reportdtl[tdtl.id].answer) {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" checked='checked' value=" + item.val + ">" + item.desc;
+                                }
+                                else {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" value=" + item.val + ">" + item.desc;
+
+                                }
+                            })
+                        }
+                            //else {
+
+                            //    $.each(tdtl.term.term_val, function (i, item) {
+                            //        htmlTpl += "<input type=" + type + " name=" + tdtl.term.id + " style='margin-right: 10px;' id="+tdtl.id+" value=" + item.val + ">" + item.desc;
+                            //    })
+                            //}
+                        else {
+
+                            $.each(tdtl.term.term_val, function (i, item) {
+                                if ($.inArray(item.val,arr)=="-1") {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" value=" + item.val + ">" + item.desc;
+
+                                }
+                                else {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" checked='checked' value=" + item.val + ">" + item.desc;
+                                }
+                            })
+                        }
+
+                        htmlTpl += '</div></div>'
+
+
+                    }
+                    else if (tdtl.sharpid == tpl.tpl_detail[j - 1].sharpid && tdtl.sharpid2 == tpl.tpl_detail[j - 1].sharpid2) {   //当前一级模板和二级模板和前一个都相同
+
+                        htmlTpl += "<div class='form-group'>";
+                        htmlTpl += "<label for='' class='pad-w20 margin-t10'>" + tdtl.term.name + "</label>";
+                        htmlTpl += "<div class='col-sm-10'>";
+                        if (type == "text" || type == "date") {
+                            htmlTpl += "<input type=" + type + " class='form-control' id="+tdtl.id+" value=" + tplreport[tdtl.id].answer + ">";
+                        }
+                        else if (type == "radio") {
+                            $.each(tdtl.term.term_val, function (i, item) {
+
+                                if (item.val == reportdtl[tdtl.id].answer) {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" checked='checked' value=" + item.val + ">" + item.desc;
+                                }
+                                else {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" value=" + item.val + ">" + item.desc;
+
+                                }
+                            })
+                        }
+                            //else {
+
+                            //    $.each(tdtl.term.term_val, function (i, item) {
+                            //        htmlTpl += "<input type=" + type + " name=" + tdtl.term.id + " style='margin-right: 10px;' id="+tdtl.id+" value=" + item.val + ">" + item.desc;
+                            //    })
+                            //}
+                        else {
+
+                            $.each(tdtl.term.term_val, function (i, item) {
+                                if ($.inArray(item.val,arr)=="-1") {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" value=" + item.val + ">" + item.desc;
+
+                                }
+                                else {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" checked='checked' value=" + item.val + ">" + item.desc;
+                                }
+                            })
+                        }
+                        //htmlTpl += "<input type='text' class='form-control'>";
+                        htmlTpl += '</div></div>'
+                    }
+                    else {   //当前一级模板和前一个一级模板相同
+
+                        htmlTpl += "<div class='medical-record pad-h5 pad-w20'>" + (tpl.sharp[tdtl.sharpid2] != null ? tpl.sharp[tdtl.sharpid2].name : "") + "</div>";
+
+                        htmlTpl += "<div class='form-group'>";
+                        htmlTpl += "<label for='' class='pad-w20 margin-t10'>" + tdtl.term.name + "</label>";
+                        htmlTpl += "<div class='col-sm-10'>";
+                        if (type == "text" || type == "date") {
+                            htmlTpl += "<input type=" + type + " class='form-control' id="+tdtl.id+" value=" + tplreport[tdtl.id].answer + ">";
+                        }
+                        else if (type == "radio") {
+                            $.each(tdtl.term.term_val, function (i, item) {
+
+                                if (item.val == reportdtl[tdtl.id].answer) {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" checked='checked' value=" + item.val + ">" + item.desc;
+                                }
+                                else {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" value=" + item.val + ">" + item.desc;
+
+                                }
+                            })
+                        }
+                            //else {
+
+                            //    $.each(tdtl.term.term_val, function (i, item) {
+                            //        htmlTpl += "<input type=" + type + " name=" + tdtl.term.id + " style='margin-right: 10px;' id="+tdtl.id+" value=" + item.val + ">" + item.desc;
+                            //    })
+                            //}
+                        else {
+
+                            $.each(tdtl.term.term_val, function (i, item) {
+                                if ($.inArray(item.val,arr)=="-1") {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" value=" + item.val + ">" + item.desc;
+
+                                }
+                                else {
+                                    htmlTpl += "<input type=" + type + " name=" + tdtl.id + " style='margin-right: 10px;' id="+tdtl.id+" checked='checked' value=" + item.val + ">" + item.desc;
+                                }
+                            })
+                        }
+                        //htmlTpl += "<input type='text' class='form-control'>";
+                        htmlTpl += '</div></div>'
+                    }
+                }
+                $("#tplDetailControls").html(htmlTpl);
+            }
+        }
+
+        function GetControlType(itype, vtype) {
+            var type = "";
+            if (itype == "10") {
+                if (vtype == "4") {
+                    type = "date";
+                }
+                else {
+                    type = "text";
+                }
+
+            }
+            else if (itype == "20") {
+                type = "radio";
+            }
+            else if (itype == "30") {
+                type = "checkbox";
+            }
+            return type;
+        }
+
+        //上传附件
+        $(function () {
+
+            $("#btnattachment").click(function () {
+                var option = {
+                    type: 'post',
+                    url: 'http://139.196.192.14/upload/web?token=' + $("#hdnToken").val(),
+                    beforeSubmit: function () {
+
+                    },
+                    success: function (result) {
+                        //alert(result);
+
+                        if ($.parseJSON(result).code == 0) {
+                            sessionStorage.setItem("PicUploadedResult", result);
+                            alert("上传成功");
+                            //$('#uploaduserpic').hidden();
+                            $("#attachmentfilepath").val("http://139.196.192.14" + $.parseJSON(result).data);
+                            //alert($("#attachmentfilepath").val());
+                        } else {
+                            alert($.parseJSON(result).message);
+                        }
+
+                    },
+                    error: function (result) {
+                        debugger;
+                    }
+                };
+
+                $('#formAttachment').ajaxSubmit(option);
+            })
+        });
+
+    </script>
+    <style>
+        #nm-name {
+            cursor: pointer;
+            width: 95%;
+            display: block;
+            line-height: 30px;
+            text-align: center;
+            display: -webkit-box;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            text-overflow: ellipsis;
+            word-break: break-all;
+            -webkit-line-clamp: 0;
+        }
+    </style>
+</head>
+<body>
+    <input type="hidden" value=@ViewBag.Token id="hdnToken" />
+
+    <!-- 头部 star -->
+    <div id="top" class="">
+        <div class="col-md-6 col-md-offset-3 col-sm-offset-2  col-sm-8  col-xs-12 ">
+            <div class="col-sm-4 col-xs-3 colorac h4">
+                LOGO
+            </div>
+            <ul class="col-sm-8 col-xs-9 text-right nav_menu">
+                @if (ViewBag.currentUserRole.ToString() == "-10")
+                {
+                    <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLProject/ProjectList">项目</a></li>
+                    <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLMessage/MessageIndex?pageType=1">留言板</a><span class="news text-top"></span></li>
+                }
+                else
+                {
+                    if (ViewBag.currentUserRole.ToString() != "90")
+                    {
+                        <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLProject/ProjectList">项目</a></li>
+                    }
+
+                    <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLMessage/MessageIndex?pageType=1">留言板</a><span class="news text-top"></span></li>
+                    if (Convert.ToInt32(ViewBag.currentUserRole.ToString()) >= 80)//80,90
+                    {
+                        <li class="col-lg-2 col-xs-3 pad-w5"><a class="h6 colorac" href="/F8YLManage/ManageIndex">管理</a></li>
+                    }
+                }
+            </ul>
+        </div>
+    </div>
+    <!-- 头部 end -->
+    <!-- 页面内容 -->
+    <div class="container message tab1" style="position: initial;overflow-x:hidden;">
+        <input type="hidden" id="CurrentUserID" value=@ViewBag.currentUserId />
+        <input type="hidden" id="CurrentUserRole" value=@ViewBag.currentUserRole />
+        <input type="hidden" id="pageType" value=@ViewBag.pageType />
+        <input type="hidden" id="projectId" value=@ViewBag.projectId />
+        <input type="hidden" id="hospitalnum" value=@ViewBag.hospitalId />
+        <input type="hidden" id="paitentId" value=@ViewBag.patientId />
+
+        @*Gerry*@
+        @{
+            TplKindListResponse tplkindList = (TplKindListResponse)ViewBag.tplkindList;
+            TplListResponse tpllistDefault = (TplListResponse)ViewBag.tpllistDefault;
+        }
+
+
+        <div class="row" style="border-bottom:1px solid #ccc;">
+            <!-- 左边 -->
+            <div class="col-sm-4 col-xs-12" style="border-right:1px solid #ccc">
+                <ul class="nav color666 col-xs-12  col-md-10 col-md-offset-2 tpl-kind-list NoticeList">
+
+                    @for (int i = 0; i < tplkindList.data.Count; i++)
+                    {
+                        if (i == 0)
+                        {
+                            <li id="@tplkindList.data[i].id" class="active" style="cursor:pointer;">@tplkindList.data[i].name</li>
+                        }
+                        else
+                        {
+                            <li id="@tplkindList.data[i].id" style="cursor:pointer;">@tplkindList.data[i].name</li>
+                        }
+                    }
+                </ul>
+            </div>
+            <!-- 右边 -->
+            <div class="col-sm-8 col-xs-12"></div>
+
+        </div>
+
+        <div class="pt-tab pt-tab2" style="display:block">
+            <div class="row" style="border-bottom:1px solid #ccc;">
+                <div class="col-sm-4 col-xs-12 notice_nav">
+                    <div class="col-md-9  col-md-offset-3 col-xs-12 ">
+                        <div class="panel panel-default panel-body box-shadow" style="margin:5px 0">
+                            <ul class="pad-w5 pro-list tab1-list tpl-kind-list-in">
+                                @foreach (var tpl in tpllistDefault.data.data)
+                                {
+                                    <li class="tpl-detail" id="@tpl.id">@tpl.name</li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- 右边 -->
+                <div class="col-sm-8 col-xs-12 pad-h10" style="margin-left:-1px;padding-bottom:30px;min-height:600px;border-left:1px solid #cccccc">
+                    <div class="col-md-9 col-xs-12">
+                        <!-- 信息表单 -->
+                        <div class="panel panel-default panel-body box-shadow" style="margin:0">
+                            <div class="date-list">
+                                <ul id="tplReportPeriodList">
+                                    @*这边是周期频次的地方*@
+                                </ul>
+                            </div>
+                            <div id="tplDetailControls" class="form-horizontal" role="form" style="max-height: 500px;overflow-x: hidden;overflow-y: auto;">
+                                @*这边是画控件的地方*@
+                            </div>
+
+                            <div class="form-group text-right pad-w20 pad-t10 tpl-report-commit" style="display:none;border-top: 0px solid #ccc">
+                                <button id="tplReportCommit" type="button" class="btn btn-primary">保存</button>
+                                <button type="submit" class="btn btn-default margin-w5">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-development btn_open_news"><img src="../images/icon20.png"></button>
+    </div>
+    <!-- 消息 -->
+    <div class="container message tab2" style="display:none;overflow-x:hidden;position:static">
+        <div class="row" style="border-bottom:1px solid #ccc">
+            <!-- 左边 -->
+            <div class="col-sm-4 col-xs-12" style="border-right:1px solid #ccc">
+                <ul class="nav color666 col-xs-9 col-sm-8 col-sm-offset-2 new_tip">
+                    <li data-tab="tab3">公告</li>
+                    <li data-tab="tab2" class="active">消息</li>
+                </ul>
+                <div class="col-xs-2 text-right" style="padding:8px">
+                    <button class="btn btn_addNews" data-toggle="modal" data-target="#myModal" style="background:0;"><img src="../images/icon19.png"></button>
+                </div>
+            </div>
+            <!-- 右边 -->
+            <div class="col-sm-8 col-xs-12"></div>
+        </div>
+        <!-- 左边 -->
+        <div class="row" style="border-bottom:1px solid #ccc;">
+            <!-- 消息列表 -->
+            <div class="col-sm-4 col-xs-12 left-nav notice_nav">
+                <!-- 消息队列1... -->
+                @foreach (PageMessageEntity message in (List<PageMessageEntity>)ViewBag.MessageList)
+                {
+                    var messageId = message.id + "&" + message.userid + "&" + message.username;
+
+                    <div class="row pad-h10 pad-w10 message-line current">
+                        <div class="col-sm-12 col-md-9 col-md-offset-3">
+                            <a id=@messageId href="javascript:;" class="thumbnail pad-h10 pad-w10" style="display:block;margin:0">
+                                <button type="button" class="close" style="top: -10px;padding:10px; margin-right: 0px;" onclick="clone(this)">&times;</button>
+                                <p>
+                                <p class="pull-right color666" style="font-size:12px;"> @message.ctime</p>
+                                <span class="head-pic-xs"><img src="../images/head-sm.jpg" alt="头像"></span>
+                                <span class="pad-w10 txt_name">@message.username</span>
+                                </p>
+                                <p class="pad-w30 color999 p-aline">@message.msg</p>
+                            </a>
+                        </div>
+                    </div>
+                }
+
+            </div>
+            <!-- 消息聊天框 -->
+            <div class="col-sm-8 col-xs-12 pad-h10 message-content" style="min-height:500px">
+                <div class="col-md-9 col-xs-12">
+                    <!-- 聊天对话框 -->
+                    <div class="modal-content dialogue-box" style="min-height:500px;display:block">
+                        <div class="modal-header">
+                            <button type="button" class="close btn_close_message">
+                                &times;
+                            </button>
+                            <h4 class="modal-title cCenter" id="dm-name">
+                                @*张三*@
+                            </h4>
+                        </div>
+                        <hr style="margin:0">
+                        <div class="modal-body" style="position:relative;overflow:hidden;">
+                            <div class="message-box" id="messageDetailList">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 留言对话框 暂无消息开始留言加 .no-message-->
+                    <div class="modal-content no-message" style="min-height:500px;display:none;width:100%">
+                        <div class="modal-header">
+                            <button type="button" class="close btn_close_message">
+                                &times;
+                            </button>
+                            <input type="hidden" id="nm-user-id" />
+                            <h4 class="modal-title cCenter cur" id="nm-name" data-open="false"></h4>
+                        </div>
+                        <hr style="margin:0">
+                        <div class="modal-body">
+
+                        </div>
+                    </div>
+                    <!-- 聊天框 -->
+                    <div class="modal-content margin-t10 send-message-box">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <textarea id="messageContextArea" class="form-control col-xs-12" rows="2" placeholder="请输入消息内容"></textarea>
+                            </div>
+                        </div>
+                        <hr style="margin:0">
+                        <div class="modal-footer pad-h5">
+                            <button id="NewMessageSend" type="button" class="btn btn-primary">
+                                发布
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-development btn_close"><img src="../images/icon20.png"></button>
+    </div>
+    <!-- 公告 -->
+    <div class="container message tab3" style="display:none;right:auto;overflow-x:hidden;position:static">
+        <!-- 公告头部 -->
+        <div class="row" style="border-bottom:1px solid #ccc">
+            <!-- 左边 -->
+            <div class="col-sm-4 col-xs-12 notice_nav" style="border-right:1px solid #ccc">
+                <ul class="nav color666 col-xs-9 col-sm-8 col-sm-offset-2 new_tip">
+                    <li data-tab="tab3" class="active">公告</li>
+                    <li data-tab="tab2">消息</li>
+                </ul>
+                <div class="col-xs-2 text-right" style="padding:8px">
+                    @{
+                        if (ViewBag.currentUserRole.ToString() == "-10" || ViewBag.currentUserRole.ToString() == "10")
+                        {
+                            <button class="btn btn_add_notice" disabled="disabled" style="background:0;"><img src="../images/icon22.png"></button>
+                        }
+                        else
+                        {
+                            <button class="btn btn_add_notice" style="background:0;"><img src="../images/icon22.png"></button>
+                        }
+                    }
+
+                </div>
+            </div>
+            <!-- 右边 -->
+            <div class="col-sm-8 col-xs-12"></div>
+        </div>
+        <!-- 公告内容 -->
+        <div class="row" style="border-bottom:1px solid #ccc">
+            <!-- 公告列表 -->
+            <div class="col-sm-4 col-xs-12 left-nav">
+                @foreach (PageMessageEntity broadcast in (List<PageMessageEntity>)ViewBag.BroadcastList)
+                {
+                    var noticeId = HttpUtility.UrlEncode(broadcast.id + "&" + broadcast.userid + "&" + broadcast.username + "&" + broadcast.label + "&" + broadcast.ctime + "&" + broadcast.url);
+
+                    var broadcastContentID = "broadcastContentID" + broadcast.id + broadcast.userid;
+
+                    <div class="row pad-h10 pad-w10 NoticeList">
+                        <div class="col-sm-12 col-md-9  col-md-offset-3">
+                            <a id=@noticeId href="javascript:;" class="thumbnail pad-h10 pad-w10 notice_list" style="display:block;margin:0;cursor:pointer">
+                                <button type="button" class="close" style="top: -10px;padding:10px; margin-right: 0px;" onclick="clone(this)">&times;</button>
+                                <p></p>
+                                <div style="overflow:hidden;">
+                                    <div class="pull-right  color666" style="font-size:12px;    width: 40%;display: -webkit-box;overflow: hidden;-webkit-box-orient: vertical;text-overflow: ellipsis;word-break: break-all;-webkit-line-clamp: 1;line-height: 12px;">@broadcast.ctime</div>
+                                    <div class="pull-left head-pic-xs"><img src="../images/icon21.png" alt="头像"></div>
+                                    <div class="pull-left pad-w10 txt_name" style="display: -webkit-box;overflow: hidden;-webkit-box-orient: vertical;text-overflow: ellipsis;word-break: break-all;-webkit-line-clamp: 1;width: 40%;">@broadcast.username&nbsp;&nbsp;@broadcast.label</div>
+                                </div>
+                                <div id=@broadcastContentID class="pad-w30 color999 p-aline">@broadcast.msg</div>
+                            </a>
+                        </div>
+                    </div>
+                }
+
+            </div>
+            <!-- 公告内容编辑 -->
+            <div class="col-sm-8 col-xs-12 pad-h10" style="border-left:1px solid #ccc;margin-left:-1px;padding-bottom:30px">
+                <div class="col-md-9 col-xs-12">
+                    <!-- 公告 -->
+                    <div class="modal-content ViewNotice" style="min-height:500px">
+                        <div class="modal-header">
+                            <h4 class="modal-title cCenter" id="noticeDetailLabel">
+                                @*id="myModalLabel"*@
+                                <a></a> 公告标题
+                            </h4>
+                        </div>
+                        <div class="notice row margin-w10 color666">
+                            <div id="noticeDetailUserName" class="text-right col-xs-6"></div>
+                            <div id="noticeDetailCTime" class="col-xs-6"></div>
+                        </div>
+                        <div id="noticeDetailContext" class="modal-body">
+                        </div>
+                        <div class="pad-w20 pad-h10" style="position:absolute;bottom:0;width:100%">
+                            <span class="pull-left pad-h10">附件</span>
+                            <div class="attachment pad-h10 pad-w10" style="margin-left: 50px;">
+                                @*<a href="#">附件标题名称.xlsx</a>
+                                    <span class="pull-right">
+                                    2.15KB&nbsp;&nbsp;&nbsp;<a href="#">下载</a>
+                                    </span>*@
+                                <a href="#" id="noticeDetailUrl"></a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 发布新公告 -->
+                    <div class="modal-content addNotice" style="min-height:500px;display:none">
+                        <div class="modal-header">
+                        </div>
+
+                        <div class="modal-body  pad-h5">
+                            <div class="form-group row">
+                                <label class="col-sm-2 control-label">标题</label>
+                                <div class="col-sm-10" style="padding:0">
+                                    <input id="NewBroadcastLabel" type="text" class="form-control" placeholder="公告标题...">
+                                </div>
+                            </div>
+                            <div class="form-group row margin-h30" style="margin:10px 0;">
+                                <label class="col-sm-2 control-label">附件</label>
+                                <div class="col-sm-10 attachment" style="padding:6px 10px">
+                                    @*<a href="#">附件标题名称.xlsx</a>
+                                        <span class="pull-right">
+                                        2.15KB&nbsp;&nbsp;&nbsp;<a href="#">选择</a>
+                                        </span>*@
+                                    <form action='' method='post' enctype='multipart/form-data' id="formAttachment">
+                                        <input type="file" style="cursor: pointer;" name="Filedata" onchange="javascript: $('#btnattachment').click();" placeholder="点击上传附件">
+                                    </form>
+                                    <input type="button" value="上传" id="btnattachment" class="btn btn-success" style="display:none;">
+                                    <input type="hidden" id="attachmentfilepath" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-2 control-label">发布至</label>
+                                <div id="newBroadcastProjectListCheckBoxList" class="col-sm-10" style="padding:0">
+                                    @{
+                                        if (ViewBag.currentUserRole == "90")
+                                        {
+                                            <label class="checkbox-inline" style="margin:0px 20px 10px 0;">
+                                                <input type="checkbox" id="ProjectId0" value="0">系统公告
+                                            </label>
+
+                                            foreach (JoinedProjectEntity item in (List<JoinedProjectEntity>)ViewBag.ProjectList)
+                                            {
+                                                var projectID = "ProjectId" + item.id;
+                                                <label class="checkbox-inline" style="margin:0px 20px 10px 0;">
+                                                    <input type="checkbox" id=@projectID value=@item.id>@item.name
+                                                </label>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            foreach (JoinedProjectEntity item in (List<JoinedProjectEntity>)ViewBag.ProjectList)
+                                            {
+                                                var projectID = "ProjectId" + item.id;
+                                                <label class="checkbox-inline" style="margin:0px 20px 10px 0;">
+                                                    <input type="checkbox" id=@projectID value=@item.id>@item.name
+                                                </label>
+                                            }
+                                        }
+                                    }
+
+
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <textarea id="NewBroadcastContext" class="form-control col-xs-12" rows="10" placeholder="公告内容..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer margin-w20 pad-h5">
+                            <button id="NewBroadcastSend" type="button" class="btn btn-primary">发布</button>
+                            <button type="button" class="btn btn-default">取消</button>
+                        </div>
+                    </div>
+                    <!-- 公告编辑 -->
+                    <div class="modal-content margin-t10 editNotice" style="display:none">
+                        <div class="modal-body">
+                            <div class="form-group pad-w20">
+                                <textarea id="BroadcastContext" class="form-control col-xs-12" rows="3" placeholder="请输入..." style="border:0;"></textarea>
+                            </div>
+                        </div>
+                        <hr style="margin:0">
+                        <div class="modal-footer pad-h5">
+                            <button id="BroadcastSend" type="button" class="btn btn-primary">
+                                发布
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-development btn_close_Notice"><img src="../images/icon20.png"></button>
+    </div>
+    <!-- 弹框 -->
+    <!-- 新的消息 -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title cCenter" id="myModalLabel">
+                        新的消息
+                    </h4>
+                </div>
+                <hr style="margin:0px">
+                <div class="modal-body">
+                    <input id="messageSearchUsers" type="text" class="form-control" placeholder="输入关键字筛选成员">
+                    <ul id="userChoiceSelection" style="padding:0" class="choice_patient">
+                        @foreach (UserDataEntity user in (List<UserDataEntity>)ViewBag.ProjectUsers)
+                        {
+                            var roleName = string.Empty;
+                            if (user.role == "-10")
+                            {
+                                roleName = "病人";
+                            }
+                            else if (user.role == "10")
+                            {
+                                roleName = "医生";
+                            }
+                            else if (user.role == "20")
+                            {
+                                roleName = "PI";
+                            }
+                            else if (user.role == "80")
+                            {
+                                roleName = "医院管理员";
+                            }
+                            else if (user.role == "90")
+                            {
+                                roleName = "超级管理员";
+                            }
+                            else
+                            {
+                                roleName = "其他";
+                            }
+                            roleName = roleName + ":";
+
+                            <li class="pad-h10" data-checked="fasle" data-uid=@user.dataId data-name=@user.username>
+                                <span class="head-pic-xs pull-left"><img src="../images/head-sm.jpg"></span>
+                                <div class="margin-w30">@roleName @user.username</div>
+                                <i></i>
+                            </li>
+
+                        }
+                    </ul>
+                </div>
+                <div class="modal-footer text-left">
+                    <button type="button" class="btn btn-info btn_save_Message" data-dismiss="modal">保存</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <a href="javascript:;" data-choose="false" class="btn_chooseAll" style="position: absolute;right: 30px;">全选</a>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <script src="../js/webuploader.min.js"></script>
+    <script src="../js/upload.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            //debugger;
+            //查询出病人信息
+            //if ($("#paitentId").val() != "" || $("#paitentId").val() != "-1")
+            //{
+            //    var sex = "";
+            //    var ethnics = "";
+            //    //调用接口,查看成员资料
+            //    $.ajax({
+            //        url: "/F8YLProject/getuserinformation?userId=" + $("#paitentId").val(),
+            //        type: "GET",
+            //        dataType: "json",
+            //        success: function (retData) {
+            //            if (retData.code == 0) {
+
+            //                if (retData.data != null) {
+            //                    $("#projectname").val(retData.data.username);
+            //                    $("#projectMobile").val(retData.data.mobile);
+            //                    $("#projectIdCard").val(retData.data.idcard);
+            //                    $("#patientaddress").val(retData.data.address);
+
+            //                    if (retData.data.sex == "1")
+            //                    {
+            //                        sex = "男";
+            //                    }
+            //                    if (retData.data.sex == "0")
+            //                    {
+            //                        sex = "女";
+            //                    }
+
+            //                    if (retData.data.ethnic != "")
+            //                    {
+            //                        $("#ethnics").val(ethnic(retData.data.ethnic));
+            //                    }
+            //                    $("#sexid").val(sex);
+
+            //                }
+            //            }
+            //            else {
+            //                alert(retData.message);
+            //            }
+            //        },
+            //        error: function (e) {
+
+            //        }
+            //    })
+            //}
+            //else
+            //{
+            //    return;
+            //}
+
+            //取消返回上一页
+            //$(".btn_cancel").click(function () {
+            //    history.back();
+            //})
+            //保存患者信息
+            //$(".btn_save").click(function () {
+            //    //history.back();
+            //    var projectname = $("#projectname").val();
+            //    var projectMobile = $("#projectMobile").val();
+            //    var projectIdCard = $("#projectIdCard").val();
+            //    var paitentId = $("#paitentId").val();
+            //    var sex = $("#sexid").val();
+            //    var ethnics = $("#ethnics").val();
+
+            //    if ($.trim(projectname) == "")
+            //    {
+            //        alert("请输入用户名！");
+            //        return false;
+            //    }
+            //    if ($.trim(projectMobile) == "") {
+            //        alert("请输入手机号！");
+            //        return false;
+            //    }
+            //    if ($.trim(projectIdCard) == "") {
+            //        alert("请输入身份证号！");
+            //        return false;
+            //    }
+            //    if ($.trim(sex) == "") {
+            //        alert("请输入性别！");
+            //        return false;
+            //    }
+            //    if (sex != "男" && sex != "女") {
+            //        alert("请输入正确的性别！");
+            //        return false;
+            //    }
+            //    if ($.trim(ethnics) != "")
+            //    {
+            //        ethnics = ethnic(ethnics);
+            //    }
+            //    if (sex == "男") {
+            //        sex = 1;
+            //    }
+            //    if (sex == "女") {
+            //        sex = 0;
+            //    }
+
+            //    if ($("#paitentId").val() == "") {
+            //        //成功后返回projectdetail
+            //        $.ajax({
+            //            url: "/F8YLMessage/addpatient?projectId=" + $("#projectId").val() + "&doctorId=" + "" + "&hospitalId=" + $("#hospitalnum").val() + "&patientId=" + "" + "&userName=" + $("#projectname").val() + "&mobile=" + $("#projectMobile").val() + "&idCard=" + $("#projectIdCard").val() + "&overwrite=" + false,
+            //            type: "GET",
+            //            dataType: "json",
+            //            success: function (retData) {
+
+            //                if (retData.code == 0) {
+            //                    window.location.href = '/F8YLProject/ProjectDetail?id=' + $("#projectId").val();
+            //                }
+            //                else {
+            //                    alert(retData.message);
+            //                }
+            //            },
+            //            error: function (e) {
+
+            //            }
+            //        })
+            //    }
+            //    else {
+            //        //修改
+            //        $.ajax({
+            //            url: "/F8YLMessage/saveInforamtion?username=" + projectname + "&mobile=" + projectMobile + "&email=" + "" + "" + "&idcard=" + projectIdCard + "&avatar=" + "" + "&userId=" + paitentId + "" + "&sex=" + sex + "&ethnic=" + ethnics,
+            //            type: "GET",
+            //            dataType: "json",
+            //            success: function (retData) {
+            //                if (retData.code == 0) {
+            //                    alert("修改成功！");
+            //                }
+            //                else {
+            //                    alert(retData.message);
+            //                }
+            //            },
+            //            error: function (e) {
+
+            //            }
+
+            //        })
+            //    }
+            //})
+
+            //打开消息列表
+            $(".btn_open_news").click(function () {
+                $(".tab1").css("display", "none");
+                $(".tab2").css("display", "block");
+            })
+            //点击消息队列打开消息
+            $(".message-line").click(function () {
+                $(".message-content").css("display", "block");
+                $(this).addClass("current").siblings().removeClass("current");
+                $(".no-message").css("display", "none");
+                $(".dialogue-box").css("display", "block");
+
+            })
+            //关闭消息对列
+            $(".btn_close").click(function () {
+                $(".tab1").css("display", "block");
+                $(".tab2").css("display", "none");
+            })
+            //选择成员聊天
+            $(".choice_patient > li").click(function () {
+                var checked = $(this).attr("data-checked");
+                if (checked == "true") {
+                    $(this).attr("data-checked", "false");
+                    $(this).removeClass("hover");
+                    $(this).removeClass("choice");
+                }
+                else {
+                    $(this).attr("data-checked", "true");
+                    $(this).addClass("hover");
+                    $(this).addClass("choice");
+                }
+            })
+            //清空选择成员聊天
+            $(".btn_addNews").click(function(){
+                $(".choice_patient > li").each(function(){
+                    $(this).attr("data-checked", "false");
+                    $(this).removeClass("hover");
+                    $(this).removeClass("choice");
+                })
+            })
+            /*保存消息列表 data-checked:是否选中，data-uid:当前列的用户id，data-name:患者名字*/
+            $(".btn_save_Message").click(function () {
+                var lid = "";
+                var lname = "";
+                //循环选中的患者
+                $(".choice_patient > li").each(function () {
+                    var checked = $(this).attr("data-checked");
+                    if (checked == "true") {
+                        lid += $(this).attr("data-uid") + ',';
+                        lname += $(this).attr("data-name") + ',';
+                    }
+                })
+                lid = lid.substring(0, lid.length - 1);
+                lname = lname.substring(0, lname.length - 1);
+                $(".no-message").css("display", "block");
+                $(".dialogue-box").css("display", "none");
+                $('#nm-user-id').text(lid);
+                $("#nm-name").text(lname);
+                console.log("已选中" + lname);
+            })
+            //关闭对话框
+            $(".btn_close_message").click(function () {
+                $(".no-message").css("display", "none");
+                $(".dialogue-box").css("display", "none");
+                $(".send-message-box").css("display", "none");
+            })
+            //消息切换公告
+            $(".new_tip>li").click(function () {
+                var tab = $(this).attr("data-tab");
+                if (tab == "tab2") {
+                    $(".tab2").css("display", "block");
+                    $(".tab3").css("display", "none");
+                }
+                else {
+                    $(".tab3").css("display", "block");
+                    $(".tab2").css("display", "none");
+                }
+            })
+            //打开公告
+            $(".NoticeList").click(function () {
+                $(".ViewNotice").css("display", "block");
+                $(".addNotice").css("display", "none");
+                //$(".editNotice").css("display", "block");
+                $(this).addClass("current").siblings().removeClass("current");
+            })
+            //发布公告
+            $(".btn_add_notice").click(function () {
+                $(".ViewNotice").css("display", "none");
+                $(".addNotice").css("display", "block");
+                $(".editNotice").css("display", "none");
+            })
+
+            //关闭公告
+            $(".btn_close_Notice").click(function () {
+                $(".tab3").css("display", "none");
+                $(".tab1").css("display", "block");
+            })
+        })
+
+        $(document).ready(function () {
+            //var type = GetQueryString("type");
+            var type = $('#pageType').val();
+            //type=1 表示打开留言板
+            if (type == "" || type == "1") {
+                $(".tab1").css("display", "none");
+                $(".tab2").css("display", "block");
+            } else {
+                $(".tab1").css("display", "block");
+                $(".tab2").css("display", "none");
+            }
+
+            //模板选择选项卡切换
+            $(".Patient_template > li").click(function () {
+                var tab = $(this).attr("data-tab");
+                $(this).addClass("active").siblings().removeClass("active");
+                $(".pt-tab").css("display", "none");
+                $("." + tab).css("display", "block");
+            })
+            //
+            $(".tab3-list p").click(function () {
+                $(this).addClass("current").siblings().removeClass("current");
+            });
+            $(".pro-list li").click(function () {
+                $(this).addClass("active").siblings().removeClass("active");
+            });
+            //获取url参数
+            function GetQueryString(name) {
+                var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+                var r = window.location.search.substr(1).match(reg);
+                if (r != null) return unescape(r[2]); return null;
+            };
+
+            $('.message-line a').click(function () {
+
+                var messageId = $(this).attr("id");
+                var userInfo = messageId.split('&');
+                var userId = userInfo[1];
+                var userName = userInfo[2];
+                var currentUserID = $('#CurrentUserID').val();
+
+                if (userId == currentUserID) {
+                    return;
+                } else {
+                    var strhtml = "";
+                    $('#nm-user-id').text(userId);
+                    $('#dm-name').text(userName);
+
+                    $.ajax({
+                        url: "/F8YLMessage/MessageDetails?id=" + userId,
+                        type: "Get",
+                        dataType: "json",
+                        success: function (retData) {
+
+                            //alert('success...');
+                            $.each(retData.data.data, function (i, item) {
+
+                                //alert('item userId:' + item.userid + 'currentUserID:' + currentUserID);
+                                if (item.userid != currentUserID) {
+                                    strhtml += "<div class='message-box-line'><p class='color999 margin-h10 cCenter'>" + item.ctime + "</p> <div class='margin-t10'> <span class='head-pic-sm pull-left'> <img src='../images/head-sm.jpg'></span> <div class='margin-w50' style='overflow:auto'><span class='colorfff left-message margin-w10 pull-left'><span class='left-message-before'></span>" + item.user.username + ":" + item.msg + "</span></div></div></div>";
+
+                                }
+                                else {
+                                    strhtml += "<div class='message-box-line'><p class='color999 margin-h10 cCenter'>" + item.ctime + "</p><div class='margin-t10'><span class='head-pic-sm pull-right'><img src='../images/head-sm.jpg'></span><div class='margin-w50' style='overflow:auto'><span class='colorfff pull-right right-message margin-w10'><i class='right-message-after'></i>" + item.user.username + ":" + item.msg + "</span></div></div></div>";
+                                }
+
+                            })
+                            $('#messageDetailList').html(strhtml);
+                        },
+                        error: function (e) {
+
+                        }
+                    })
+                }
+
+            });
+
+            $('.NoticeList a').click(function () {
+
+                var broadcastId = decodeURIComponent($(this).attr("id").replace(/\+/g, '%20'));
+                var noticeInfo = broadcastId.split('&');
+                var noticeID = noticeInfo[0];
+                var noticeUserId = noticeInfo[1];
+                var noticeUserName = noticeInfo[2];
+                var noticeLabel = noticeInfo[3];
+                var noticeCtime = noticeInfo[4];
+                var noticeUrl = noticeInfo[5];
+                var broadcastContentID = "broadcastContentID" + noticeID + noticeUserId;
+                var noticeMsg = $('#' + broadcastContentID).text();
+
+                $('#noticeDetailLabel').html(noticeLabel);
+                $('#noticeDetailUserName').text("发布人:" + noticeUserName);
+                $('#noticeDetailCTime').text("发布时间:" + noticeCtime);
+                $("#noticeDetailUrl").attr("href", noticeUrl).text(noticeUrl.substr(noticeUrl.lastIndexOf("/") + 1));
+                $('#noticeDetailContext').text(noticeMsg);
+
+            });
+
+            $('#messageSearchUsers').bind('keydown', function (event) {
+                if (event.keyCode == 13111111) {
+                    var searchContext = $(this).val();
+                    $.ajax({
+                        url: "/F8YLMessage/SearchHospitalUsers?searchContext=" + searchContext,
+                        type: "Get",
+                        dataType: "json",
+                        success: function (retData) {
+                            //
+                            //alert('success...');
+                            var strhtml = "";
+
+                            $.each(retData.data, function (i, item) {
+                                var roleName = "";
+                                if (item.role == "-10") {
+                                    roleName = "病人";
+                                }
+                                else if (item.role == "10") {
+                                    roleName = "医生";
+                                }
+                                else if (item.role == "20") {
+                                    roleName = "PI";
+                                }
+                                else if (item.role == "80") {
+                                    roleName = "医院管理员";
+                                }
+                                else if (item.role == "90") {
+                                    roleName = "超级管理员";
+                                }
+                                else {
+                                    roleName = "其他";
+                                }
+                                roleName = roleName + ":";
+                                strhtml += "  <li class='pad-h10 choice' data-checked='fasle' data-uid=" + item.id + " data-name=" + item.username + "><span class='head-pic-xs pull-left'><img src='../images/head-sm.jpg'></span><div class='margin-w30'>" + roleName + " " + item.username + "</div><i></i></li>";
+                            })
+                            document.getElementById('userChoiceSelection').innerHTML = strhtml;
+                            //$('.choice_patient').html(strhtml);
+                        },
+                        error: function (e) {
+
+                        }
+                    })
+
+                }
+            });
+
+            $("#nm-name").click(function () {
+                var open = $(this).attr("data-open");
+                if (open == "false") {
+                    $(this).removeClass("cur");
+                    $(this).attr("data-open", "true");
+                }
+                else {
+                    $(this).addClass("cur");
+                    $(this).attr("data-open", "false");
+                }
+            });
+            //新建消息全选/全不选
+            $(".btn_chooseAll").click(function(){
+                var choose=$(this).attr("data-choose");
+                if(choose=="false"){
+                    $(this).text("反选");
+                    $(this).attr("data-choose","true");
+                    $(".choice_patient > li").each(function(){
+                        $(this).attr("data-checked", "true");
+                        $(this).addClass("hover");
+                        $(this).addClass("choice");
+                    })
+                }
+                else{
+                    $(this).text("全选");
+                    $(this).attr("data-choose","false");
+                    $(".choice_patient > li").each(function(){
+                        $(this).attr("data-checked", "false");
+                        $(this).removeClass("hover");
+                        $(this).removeClass("choice");
+                    })
+                }
+            })
+            $(function(){
+                var height=$(window).height();
+                $(".container ").css("height",height-60);
+            })
+            oInit();
+            $(window).resize(function(){
+                oInit();
+            });
+        });
+        function oInit(){
+            var width=$(window).width();
+            if(width<=768)
+                $(".notice_nav").css("width",width);
+            else
+                $(".notice_nav").css("width","33.33%");
+        }
+        function clone(obj){
+            $(obj).parent().parent().parent().remove();
+            return true;
+        }
+    </script>
+</body>
+</html>
